@@ -1,0 +1,29 @@
+{
+    "name": "baril/laravel",
+    "description": "Laravel tidbits",
+    "type": "library",
+    "require": {
+        "php": ">=7.0",
+        "laravel/framework": "~5.6"
+    },
+    "require-dev": {
+        "orchestra/testbench": "3.6",
+        "orchestra/database": "3.6",
+        "squizlabs/php_codesniffer": "^2.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Baril\\Smoothie\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Baril\\Smoothie\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "sniff": "./vendor/bin/phpcs --standard=./phpcs.xml ./src",
+        "fix": "./vendor/bin/phpcbf --standard=./phpcs.xml ./src",
+        "test": "vendor/bin/phpunit --colors=always --testdox -v"
+    }
+}
