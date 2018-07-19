@@ -7,6 +7,7 @@ Some fruity additions to Laravel's Eloquent:
 * [Accessor cache](#accessor-cache)
 * [Fuzzy dates](#fuzzy-dates)
 * [Mutually-belongs-to-many-selves relationship](#mutually-belongs-to-many-selves-relationship)
+* [N-ary many-to-many relationships](#n-ary-many-to-many-relationships)
 * [Orderable behavior](#orderable-behavior)
 * [Tree-like structures and closure tables](#tree-like-structures-and-closure-tables)
 
@@ -579,6 +580,251 @@ data and fix it if needed:
 
 ```bash
 php artisan smoothie:fix-pivots "App\\YourModelClass" relationName
+```
+
+## N-ary many-to-many relationships
+
+Let's say that you're building a project management app. Each user of your
+app has many roles in your ACL system: projet manager, developer... But each
+role applies to a specific project rather than the whole app.
+
+Your basic database structure probably looks something like this:
+
+```
+projects
+    id - integer
+    name - string
+
+roles
+    id - integer
+    name - string
+
+users
+    id - integer
+    name - string
+
+project_role_user
+    project_id - integer
+    role_id - integer
+    user_id - integer
+```
+
+Of course, you could define classic `belongsToMany` relations between your models,
+and even add a `withPivot` clause to include the 3rd pivot column:
+
+```php
+class User extends Model
+{
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_role_user')->withPivot('role_id');
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'project_role_user')->withPivot('project_id');
+    }
+}
+```
+
+It won't be very satisfactory though, because:
+* querying `$user->projects()` or `$user->roles()` might return duplicated
+results (in case the user has 2 different roles in the same project, or the same
+role in 2 different projects),
+* Both relations are not related to one another, so there's no elegant way to
+retrieve the user's role for a specific project, or the projects where the
+user has a specific role.
+
+That's where the `belongsToMultiMany` relation comes in handy.
+
+### Setup
+
+Step 1: add a primary key to your pivot table.
+
+```
+class AddPrimaryKeyToProjectRoleUserTable extends Migration
+{
+    public function up()
+    {
+        Schema::table('project_role_user', function (Blueprint $table) {
+             $table->increments('id')->first();
+        });
+    }
+    public function down()
+    {
+        Schema::table('project_role_user', function (Blueprint $table) {
+             $table->dropColumn('id');
+        });
+    }
+}
+```
+
+Step 2: have your model use the
+`Baril\Smoothie\Concerns\HasMultiManyRelationships` trait (or extend the
+`Baril\Smoothie\Model` class).
+
+Step 3: define your relations with `belongsToMultiMany` instead of
+`belongsToMany`. The prototype for both methods is the same except that:
+* the 2nd argument (pivot table name) is required for `belongsToMultiMany`
+(because we wouldn't be able to guess it),
+* there's an additional 3rd (optional) argument which is the name of the
+primary key of the pivot table (defaults to `id`).
+
+```php
+class User extends Model
+{
+    use HasMultiManyRelationships;
+
+    public function projects()
+    {
+        return $this->belongsToMultiMany(Project::class, 'project_role_user');
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMultiMany(Role::class, 'project_role_user');
+    }
+}
+```
+
+You can do the same in all 3 classes, which means you will declare 6 different
+relations. Note that:
+* To avoid confusion, it's better (but not required) to give the same
+name to the similar relations (`Project::roles()` and `User::roles()`).
+* You don't have to define all 6 relations if there are some of them you know
+you'll never need.
+
+Also, notice that the definition of the relations are independant: there's
+nothing here that says that `projects` and `roles` are related to one another.
+The magic will happen only because they're defined as "multi-many" relationships
+and because they're using the same pivot table.
+
+### Querying the relations
+
+Overall, multi-many relations behave exactly like many-to-many relations. There
+are 2 differences though.
+
+The first difference is that multi-many relations will return "folded" (ie.
+deduplicated) results. For example, if `$user` has the role `admin` in 2
+different projects, `$user->roles` will return `admin` only once (contrary
+to a regular `BelongsToMany` relation). Should you need to fetch the "unfolded"
+results, you can just chain the `unfolded()` method:
+
+```php
+$user->roles()->unfolded()->get();
+```
+
+The 2nd (and most important) difference is that when you "chain" 2 (or more)
+"sibling" multi-many relations, the result returned by each relation will be
+automatically constrained by the previously chained relation(s).
+
+Check the following example:
+
+```php
+$roles = $user->projects->first()->roles;
+```
+
+Here, a regular `BelongsToMany` relation would have returned all roles related
+to the project, whether they're attached to this `$user` or another one. But
+with multi-many relations, `$roles` contains only the roles of `$user` in
+this project.
+
+If you ever need to, you can always cancel this behavior by chaining the
+`all()` method:
+
+```php
+$project = $user->projects->first();
+$roles = $project->roles()->all()->get();
+```
+
+Now `$roles` contains all the roles for `$project`, whether they come from this
+`$user` or any other one.
+
+Another way to use the multi-many relation is as follows:
+
+```php
+$project = $user->projects->first();
+$roles = $user->roles()->for('project', $project)->get();
+```
+
+This will return only the roles that `$user` has on `$project`. It's a nicer
+way to write the following:
+
+```php
+$project = $user->projects->first();
+$roles = $user->roles()->withPivot('project_id', $project->id)->get();
+```
+
+The arguments for the `for` method are:
+* the name of the "other" relation in the parent class (here: `projects`, as in
+the method `User::projects()`), or its singular version (`project`),
+* either a model object or id, or a collection (of models or ids), or an array of ids.
+
+### Eager-loading
+
+The behavior described above works with eager loading too:
+
+```php
+$users = User::with('projects', 'projects.roles')->get();
+$user = $users->first();
+$user->projects->first()->roles; // only the roles of $user on this project
+```
+
+Similarly as the `all()` method described above, you can use `withAll` if you
+don't want to constrain the 2nd relation:
+
+```php
+$users = User::with('projects')->withAll('projects.roles')->get();
+```
+
+> Note: for non multi-many relations, or "unconstrained" multi-many relations,
+> `withAll` is just an alias of `with`:
+
+```php
+$users = User::with('projects', 'status')->withAll('projects.roles')->get();
+// can be shortened to:
+$users = User::withAll('projects', 'projects.roles', 'status')->get();
+```
+
+### Querying relationship existence
+
+Querying the existence of a relation will also have the same behavior:
+
+```php
+User::has('projects.roles')->get();
+```
+
+The query above will return the users who have a role in any project.
+
+### Attaching / detaching related models
+
+Attaching models to a multi-many relation will fill the pivot values for
+all the previously chained "sibling" multi-many relations
+
+```php
+$user->projects()->first()->roles()->attach($admin);
+// The new pivot row will receive $user's id in the user_id column.
+```
+
+Detaching models from a relation will also take into account all the "relation
+chain":
+
+```php
+$user->projects()->first()->roles()->detach($admin);
+// Will detach the $admin role from this project, for $user only.
+// Other admins of this project will be preserved.
+```
+
+Again, the behavior described above can be disabled by chaining the
+`all()` method:
+
+```php
+$user->projects()->first()->roles()->all()->attach($admin);
+// The new pivot row's user_id will be NULL.
+
+$user->projects()->first()->roles()->all()->detach($admin);
+// Will delete all pivot rows for this project and the $admin role,
+// whoever the user is.
 ```
 
 ## Orderable behavior

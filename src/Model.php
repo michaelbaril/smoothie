@@ -8,6 +8,7 @@ class Model extends LaravelModel
 {
     use Concerns\AliasesAttributes;
     use Concerns\HasFuzzyDates;
+    use Concerns\HasMultiManyRelationships;
     use Concerns\HasMutualSelfRelationships;
     use Concerns\HasOrderedRelationships;
     use Concerns\ScopesTimestamps;
