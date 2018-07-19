@@ -1,6 +1,14 @@
 {
-    "name": "baril/laravel",
-    "description": "Laravel tidbits",
+    "name": "baril/smoothie",
+    "description": "Some fruity additions to Laravel's Eloquent: fuzzy dates, mutual many-to-many relationships, orderable behavior, closure tables.",
+    "keywords": [
+        "laravel", "eloquent", "database",
+        "fuzzy dates", "dates with zeros",
+        "mutual relationship", "reciprocal relationship",
+        "sortable", "orderable",
+        "closure table", "closures", "adjacency list", "tree", "hierarchy", "nested sets"
+    ],
+    "license": "MIT",
     "type": "library",
     "require": {
         "php": ">=7.0",
@@ -19,6 +27,16 @@
     "autoload-dev": {
         "psr-4": {
             "Baril\\Smoothie\\Tests\\": "tests/"
+        }
+    },
+    "suggest": {
+        "rutorika/sortable": "An alternative version of the 'Orderable' behavior that inspired Smoothie's implementation."
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Baril\\Smoothie\\SmoothieServiceProvider"
+            ]
         }
     },
     "scripts": {
