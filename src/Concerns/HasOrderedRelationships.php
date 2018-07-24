@@ -4,10 +4,26 @@ namespace Baril\Smoothie\Concerns;
 
 use Baril\Smoothie\Relations\BelongsToManyOrdered;
 use Baril\Smoothie\Relations\MorphToManyOrdered;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 trait HasOrderedRelationships
 {
+    /**
+     * Get the relationship name of the belongs to many.
+     *
+     * @return string
+     */
+    protected function guessOrderedRelation()
+    {
+        $methods = ['guessOrderedRelation', 'belongsToManyOrdered', 'morphToManyOrdered', 'morphedByManyOrdered'];
+        $caller = Arr::first(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), function ($trace) use ($methods) {
+            return ! in_array($trace['function'], $methods);
+        });
+
+        return ! is_null($caller) ? $caller['function'] : null;
+    }
+
     /**
      * Define a many-to-many relationship.
      * The prototype is similar as the belongsToMany method, with the
@@ -31,7 +47,7 @@ trait HasOrderedRelationships
         // name of the calling function. We will use that function name as the
         // title of this relation since that is a great convention to apply.
         if (is_null($relation)) {
-            $relation = $this->guessBelongsToManyRelation();
+            $relation = $this->guessOrderedRelation();
         }
 
         // First, we'll need to determine the foreign key and "other key" for the
@@ -80,7 +96,7 @@ trait HasOrderedRelationships
                                 $relatedPivotKey = null, $parentKey = null,
                                 $relatedKey = null, $inverse = false)
     {
-        $caller = $this->guessBelongsToManyRelation();
+        $caller = $this->guessOrderedRelation();
 
         // First, we will need to determine the foreign key and "other key" for the
         // relationship. Once we have determined the keys we will make the query

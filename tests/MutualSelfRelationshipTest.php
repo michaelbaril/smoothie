@@ -14,6 +14,11 @@ class MutualSelfRelationshipTest extends TestCase
         $this->tags = factory(Tag::class, 5)->create();
     }
 
+    public function test_relation_name()
+    {
+        $this->assertEquals('related', $this->tags[0]->related()->getRelationName());
+    }
+
     public function test_attach_and_detach()
     {
         $this->tags[0]->related()->attach($this->tags[1]);

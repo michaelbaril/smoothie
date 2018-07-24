@@ -2,21 +2,24 @@
 
 namespace Baril\Smoothie\Tests;
 
-use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Baril\Smoothie\SmoothieServiceProvider;
+use Dotenv\Dotenv;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 class TestCase extends OrchestraTestCase
 {
     protected function getEnvironmentSetUp($app)
     {
+        $dotenv = new Dotenv(dirname(__DIR__));
+        $dotenv->load();
         $app['config']->set('database.default', 'smoothie');
         $app['config']->set('database.connections.smoothie', [
             'driver' => 'mysql',
-            'host' => '127.0.0.1',
-            'port' => '3306',
-            'database' => 'smoothie',
-            'username' => 'root',
-            'password' => '',
+            'host' => getenv('DB_HOST'),
+            'port' => getenv('DB_PORT'),
+            'database' => getenv('DB_DATABASE'),
+            'username' => getenv('DB_USERNAME'),
+            'password' => getenv('DB_PASSWORD'),
             'prefix'   => '',
         ]);
     }

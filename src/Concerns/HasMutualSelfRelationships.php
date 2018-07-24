@@ -3,6 +3,7 @@
 namespace Baril\Smoothie\Concerns;
 
 use Baril\Smoothie\Relations\MutuallyBelongsToManySelves;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 /**
@@ -10,6 +11,21 @@ use Illuminate\Support\Str;
  */
 trait HasMutualSelfRelationships
 {
+    /**
+     * Get the relationship name of the belongs to many.
+     *
+     * @return string
+     */
+    protected function guessMutualRelation()
+    {
+        $methods = ['guessMutualRelation', 'mutuallyBelongsToManySelves'];
+        $caller = Arr::first(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), function ($trace) use ($methods) {
+            return ! in_array($trace['function'], $methods);
+        });
+
+        return ! is_null($caller) ? $caller['function'] : null;
+    }
+
     /**
      * Get the default foreign key name for the model in a self-relationship.
      *
@@ -44,7 +60,7 @@ trait HasMutualSelfRelationships
         // name of the calling function. We will use that function name as the
         // title of this relation since that is a great convention to apply.
         if (is_null($relation)) {
-            $relation = $this->guessBelongsToManyRelation();
+            $relation = $this->guessMutualRelation();
         }
 
         // First, we'll need to determine the foreign keys for the

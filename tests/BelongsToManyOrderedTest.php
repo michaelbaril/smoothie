@@ -37,6 +37,11 @@ class BelongsToManyOrderedTest extends TestCase
         }
     }
 
+    public function test_relation_name()
+    {
+        $this->assertEquals('tags', $this->articles[0]->tags()->getRelationName());
+    }
+
     public function test_position_on_attach()
     {
         $article = $this->articles[0];
