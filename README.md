@@ -3,6 +3,7 @@
 Some fruity additions to Laravel's Eloquent:
 
 * [Miscellaneous](#miscellaneous)
+* [Field aliases](#field-aliases)
 * [Fuzzy dates](#fuzzy-dates)
 * [Mutually-belongs-to-many-selves relationship](#mutually-belongs-to-many-selves-relationship)
 * [Orderable behavior](#orderable-behavior)
@@ -11,6 +12,37 @@ Some fruity additions to Laravel's Eloquent:
 > :warning: Note: only MySQL is tested and actively supported.
 
 ## Miscellaneous
+
+### Save model and restore modified attributes
+
+This package adds a new option `restore` to the `save` method:
+
+```php
+$model->save(['restore' => true]);
+```
+
+This forces the model to refresh its `original` array of attributes from the
+database before saving. It's useful when your database row has changed outside
+the current `$model` instance, and you need to make sure that the `$model`'s
+current state will be saved exactly, even restoring attributes that haven't
+changed in the current instance:
+
+```php
+
+$model1 = Article::find(1);
+$model2 = Article::find(1);
+
+$model2->title = 'new title';
+$model2->save();
+
+$model1->save(['restore' => true]); // the original title will be restored
+                                    // because it hasn't changed in `$model1`
+```
+
+To use this option, you need your model to extend the `Baril\Smoothie\Model`
+class instead of `Illuminate\Database\Eloquent\Model`.
+
+### Explicitly order the query results
 
 The package adds the following method to Eloquent collections:
 
@@ -26,7 +58,18 @@ example, the returned collection will contain (in this order):
 * any other models of the original collection, in the same order as
 before calling `sortByKeys`.
 
-In order to use this method, you need Smoothie's service provider to be
+Similarly, using the `findInOrder` method on models or query builders, instead
+of `findMany`, will preserve the order of the provided ids:
+
+```php
+$collection = Article::findMany([4, 5, 3]); // we're not sure that the article
+                                            // with id 4 will be the first of
+                                            // the returned collection
+
+$collection = Article::findInOrder([4, 5, 3]); // now we're sure
+```
+
+In order to use these methods, you need Smoothie's service provider to be
 registered in your `config\app.php` (or use package auto-discovery):
 
 ```php
@@ -38,6 +81,169 @@ return [
     ],
 ];
 ```
+
+### Timestamp scopes
+
+The `Baril\Smoothie\Concerns\ScopesTimestamps` trait provides some scopes for
+models with `created_at` and `updated_at` columns:
+
+* `$query->orderByCreation($direction = 'asc')`,
+* `$query->createdAfter($date, $strict = false)` (the `$date` argument can be of
+any datetime-castable type, and the `$strict` parameter can be set to `true` if
+you want to use a strict inequality),
+* `$query->createdBefore($date, $strict = false)`,
+* `$query->createdBetween($start, $end, $strictStart = false, $strictEnd = false)`,
+* `$query->orderByUpdate($direction = 'asc')`,
+* `$query->updatedAfter($date, $strict = false)`,
+* `$query->updatedBefore($date, $strict = false)`,
+* `$query->updatedBetween($start, $end, $strictStart = false, $strictEnd = false)`.
+
+## Field aliases
+
+### Basic usage
+
+The `Baril\Smoothie\Concerns\AliasesAttributes` trait provides an easy way
+to normalize the attributes names of a model if you're working with an
+existing database with column namings you don't like.
+
+There are 2 different ways to define aliases:
+* define a column prefix: all columns prefixed with it will become magically
+accessible as un-prefixed attributes,
+* define an explicit alias for a given column.
+
+Let's say you're working with the following table (this example comes from
+the blog application Dotclear):
+
+```
+dc_blog
+    blog_id
+    blog_uid
+    blog_creadt
+    blog_upddt
+    blog_url
+    blog_name
+    blog_desc
+    blog_status
+```
+
+Then you could define your model as follows:
+
+```php
+class Blog extends Model
+{
+    const CREATED_AT = 'blog_creadt';
+    const UPDATED_AT = 'blog_upddt';
+
+    protected $primaryKey = 'blog_id';
+    protected $keyType = 'string';
+
+    protected $columnsPrefix = 'blog_';
+    protected $aliases = [
+        'description' => 'blog_desc',
+    ];
+}
+```
+
+Now the `blog_id` column can be simply accessed this way: `$model->id`.
+Same goes for all other columns prefixed with `blog_`.
+
+Also, the `blog_desc` column can be accessed with the more explicit alias
+`description`.
+
+The original namings are still available. This means that there are actually 3
+different ways to access the `blog_desc` column:
+
+* `$model->blog_desc` (original column name),
+* `$model->desc` (because of the `blog_` prefix),
+* `$model->description` (thanks to the explicit alias).
+
+### Collisions and priorities
+
+If an alias collides with a real column name, it will have priority
+over it. This means that in the example above, if the table had a column
+actually named `desc` or `description`, you wouldn't be able to access it any
+more. You still have the possibility to define another alias for the column
+though.
+
+```php
+class Article
+{
+    protected $aliases = [
+        'title' => 'meta_title',
+        'original_title' => 'title',
+    ];
+}
+```
+
+In the example above, the `title` attribute of the model returns the value of
+the `meta_title` column in the database. The value of the `title` column can
+be accessed with the `original_title` attribute.
+
+Also, explicit aliases have priority over aliases implicitely defined by a
+column prefix. This means that when an "implicit alias" collides with a real
+column name, you can define an explicit alias that restores the original column
+name:
+
+```php
+class Article
+{
+    protected $aliases = [
+        'title' => 'title',
+    ];
+    protected $columnsPrefix = 'a_';
+}
+```
+
+Here, the `title` attribute of the model will return the value of the `title`
+column of the database. The `a_title` column can be accessed with the `a_title`
+attribute (or you can define another alias for it).
+
+### Accessors, casts and mutators
+
+You can define accessors either on the original attribute name, or the alias,
+or both.
+
+* If there's an accessor on the original name only, it will always apply,
+whether you access the attribute with its original name or its alias.
+* If there's an accessor on the alias only, it will apply only if you access
+the attribute using its alias.
+* If there's an accessor on both, each will apply individually (and will receive
+the original `$value`).
+
+```php
+class Blog extends Model
+{
+    const CREATED_AT = 'blog_creadt';
+    const UPDATED_AT = 'blog_upddt';
+
+    protected $primaryKey = 'blog_id';
+    protected $keyType = 'string';
+
+    protected $columnsPrefix = 'blog_';
+    protected $aliases = [
+        'description' => 'blog_desc',
+    ];
+
+    public function getPrDescAttribute($value)
+    {
+        return trim($value);
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        return htmlentities($value);
+    }
+}
+
+$blog->pr_desc; // will return the trimmed description
+$blog->desc; // will return the trimmed description
+$blog->description; // will return the untrimmed, HTML-encoded description
+```
+
+The same logic applies to casts and mutators.
+
+> :warning: Note: if you define a cast on the alias and an accessor on the original
+> attribute name, the accessor won't apply to the alias, only the cast will.
 
 ## Fuzzy dates
 

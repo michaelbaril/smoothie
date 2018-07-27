@@ -89,4 +89,17 @@ class MutualSelfRelationshipTest extends TestCase
 
         $this->assertEquals($expected->toArray(), $pivots->toArray());
     }
+
+    public function test_pivot_query()
+    {
+        $this->tags[1]->related()->sync([ $this->tags[0]->id, $this->tags[2]->id ]);
+
+        $results = $this->tags[1]->related()->newPivotStatementForId($this->tags[0]->id)->get();
+        $this->assertEquals(1, $results->count());
+        $this->assertEquals($this->tags[0]->id, $results->first()->other_tag_id);
+
+        $results = $this->tags[1]->related()->newPivotStatementForId($this->tags[2]->id)->get();
+        $this->assertEquals(1, $results->count());
+        $this->assertEquals($this->tags[2]->id, $results->first()->other_tag_id);
+    }
 }

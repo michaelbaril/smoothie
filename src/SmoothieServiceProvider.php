@@ -6,6 +6,7 @@ use Baril\Smoothie\Console\FixPivotsCommand;
 use Baril\Smoothie\Console\FixPositionsCommand;
 use Baril\Smoothie\Console\FixTreeCommand;
 use Baril\Smoothie\Console\GrowTreeCommand;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,6 +20,10 @@ class SmoothieServiceProvider extends ServiceProvider
             FixTreeCommand::class,
             GrowTreeCommand::class,
         ]);
+
+        Builder::macro('findInOrder', function ($ids, $columns = ['*']) {
+            return $this->findMany($ids, $columns)->sortByKeys($ids);
+        });
 
         Collection::macro('sortByKeys', function(array $ids) {
             $ids = array_flip(array_values($ids));

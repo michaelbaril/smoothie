@@ -206,14 +206,17 @@ class MutuallyBelongsToManySelves extends BelongsToMany
     {
         $parentId = $this->parent->{$this->parentKey};
         if ($id > $parentId) {
-            return $this->newPivotQuery()
-                ->where($this->relatedPivotKey, $id);
+            return $this->newPivotQueryWithoutConstraints()
+                    ->where($this->foreignPivotKey, $parentId)
+                    ->where($this->relatedPivotKey, $id);
         } elseif ($id < $parentId) {
-            return $this->newPivotQuery()
-                ->where($this->foreignPivotKey, $id);
+            return $this->newPivotQueryWithoutConstraints()
+                    ->where($this->relatedPivotKey, $parentId)
+                    ->where($this->foreignPivotKey, $id);
         } else {
             // $id == $parentId
-            return $this->newPivotQuery()->where($this->relatedPivotKey, $id)
+            return $this->newPivotQueryWithoutConstraints()
+                    ->where($this->relatedPivotKey, $id)
                     ->where($this->foreignPivotKey, $id);
         }
     }
@@ -224,6 +227,16 @@ class MutuallyBelongsToManySelves extends BelongsToMany
      * @return \Illuminate\Database\Query\Builder
      */
     protected function newPivotQuery()
+    {
+        $query = $this->newPivotQueryWithoutConstraints();
+
+        return $query->where(function ($query) {
+            $query->where($this->foreignPivotKey, $this->parent->{$this->parentKey})
+                  ->orWhere($this->relatedPivotKey, $this->parent->{$this->parentKey});
+        });
+    }
+
+    protected function newPivotQueryWithoutConstraints()
     {
         $query = $this->newPivotStatement();
 
@@ -241,9 +254,6 @@ class MutuallyBelongsToManySelves extends BelongsToMany
         ];
         $query->selectRaw(implode(',', $select), [$this->parent->{$this->parentKey}, $this->parent->{$this->parentKey}]);
 
-        return $query->where(function ($query) {
-            $query->where($this->foreignPivotKey, $this->parent->{$this->parentKey})
-                  ->orWhere($this->relatedPivotKey, $this->parent->{$this->parentKey});
-        });
+        return $query;
     }
 }

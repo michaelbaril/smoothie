@@ -3,6 +3,7 @@
     "description": "Some fruity additions to Laravel's Eloquent: fuzzy dates, mutual many-to-many relationships, orderable behavior, closure tables.",
     "keywords": [
         "laravel", "eloquent", "database",
+        "attribute aliases", "attribute mapping",
         "fuzzy dates", "dates with zeros",
         "mutual relationship", "reciprocal relationship",
         "sortable", "orderable",
