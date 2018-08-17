@@ -417,6 +417,28 @@ trait InteractsWithOrderedPivotTable
         return $results;
     }
 
+    /**
+     *
+     * @param array|\Illuminate\Database\Eloquent\Collection $ids
+     * @return $this
+     */
+    public function setOrder($ids)
+    {
+        $models = $this->get()->sortByKeys($this->parseIds($ids));
+
+        $ids = $models->modelKeys();
+        $positions = $models->pluck($this->accessor . '.' . $this->getOrderColumn())->sort()->values()->all();
+        $newOrder = array_combine($ids, $positions);
+
+        $this->getConnection()->transaction(function () use ($newOrder) {
+            foreach ($newOrder as $id => $position) {
+                $this->newPivotStatementForId($id)->update([$this->getOrderColumn() => $position]);
+            }
+        });
+
+        return $this;
+    }
+
     public function refreshPositions()
     {
         $connection = $this->getConnection();

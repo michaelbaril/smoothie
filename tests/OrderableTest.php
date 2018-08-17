@@ -94,4 +94,31 @@ class OrderableTest extends TestCase
         $this->assertEquals(2, $this->items[2]->previous()->count());
         $this->assertEquals(3, $this->items[1]->next()->count());
     }
+
+    public function test_order_collection()
+    {
+        $collection = Model::all();
+        $collection->shuffle();
+        $collection->saveOrder();
+        $collection->each(function ($item, $key) {
+            $this->assertEquals($key + 1, $item->position);
+            $this->assertEquals($key + 1, $item->fresh()->position);
+        });
+
+        $positions = [
+            1 => 4,
+            3 => 3,
+            4 => 1,
+        ];
+
+        $collection = Model::ordered('desc')->whereIn('position', $positions)->get();
+        $collection->saveOrder();
+        Model::orderBy('id')->each(function($item, $key) use ($positions) {
+            if (in_array($key + 1, $positions)) {
+                $this->assertEquals($positions[$key + 1], $item->position);
+            } else {
+                $this->assertEquals($key + 1, $item->position);
+            }
+        });
+    }
 }

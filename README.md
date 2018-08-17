@@ -2,12 +2,42 @@
 
 Some fruity additions to Laravel's Eloquent:
 
+* [Miscellaneous](#miscellaneous)
 * [Fuzzy dates](#fuzzy-dates)
 * [Mutually-belongs-to-many-selves relationship](#mutually-belongs-to-many-selves-relationship)
 * [Orderable behavior](#orderable-behavior)
 * [Tree-like structures and closure tables](#tree-like-structures-and-closure-tables)
 
 > :warning: Note: only MySQL is tested and actively supported.
+
+## Miscellaneous
+
+The package adds the following method to Eloquent collections:
+
+```php
+$collection = YourModel::all()->sortByKeys([3, 4, 2]);
+```
+
+It allows for explicit ordering of collections by primary key. In the above
+example, the returned collection will contain (in this order):
+* model with id 3,
+* model with id 4,
+* model with id 2,
+* any other models of the original collection, in the same order as
+before calling `sortByKeys`.
+
+In order to use this method, you need Smoothie's service provider to be
+registered in your `config\app.php` (or use package auto-discovery):
+
+```php
+return [
+    // ...
+    'providers' => [
+        Baril\Smoothie\SmoothieServiceProvider::class,
+        // ...
+    ],
+];
+```
 
 ## Fuzzy dates
 
@@ -332,6 +362,57 @@ $entity->previous(5)->get(); // returns a collection with the previous 5 entitie
 $entity->next()->first(); // returns the next entity
 ```
 
+### Mass reordering
+
+The `move*` methods described above are not appropriate for mass reordering
+because:
+* they would perform many unneeded queries,
+* changing a model's position affects other model's positions as well, and
+can cause side effects if you're not careful.
+
+Example:
+
+```php
+$models = Article::orderBy('publication_date', 'desc')->get();
+$models->map(function($model, $key) {
+    return $model->moveToOffset($key);
+});
+```
+
+The sample code above will corrupt the data because you need each model to be
+"fresh" before you change its position. The following code, on the other hand,
+ will work properly:
+
+```php
+$collection = Article::orderBy('publication_date', 'desc')->get();
+$collection->map(function($model, $key) {
+    return $model->fresh()->moveToOffset($key);
+});
+```
+
+It's still not a good way to do it though, because it performs many unneeded
+queries. A better way to handle mass reordering is to use the `saveOrder`
+method on a collection:
+
+```php
+$collection = Article::orderBy('publication_date', 'desc')->get();
+// $collection is not a regular Eloquent collection object, it's a custom class
+// with the following additional method:
+$collection->saveOrder();
+```
+
+That's it! Now the items' order in the collection has been applied to the
+`position` column of the database.
+
+To define the order explicitely, you can do something like this:
+```php
+$collection = Status::all();
+$collection->sortByKeys([2, 1, 5, 3, 4])->saveOrder();
+```
+
+> Note: Only the models within the collection are reordered / swapped between
+> one another. The other rows in the table remain untouched.
+
 ### Orderable groups / one-to-many relationships
 
 Sometimes, the table's data is "grouped" by some column, and you need to order
@@ -470,6 +551,16 @@ $article->tags()->moveBefore($tag1, $tag2);
 
 Note that if `$model` doesn't belong to the relationship, any of these methods
 will throw a `Baril\Smoothie\GroupException`.
+
+There's also a method for mass reordering:
+
+```php
+$article->tags()->setOrder([$id1, $id2, $id3]);
+```
+
+In the example above, tags with ids `$id1`, `$id2`, `$id3` will now be at the
+beginning of the article's `tags` collection. Any other tags attached to the
+article will come after, in the same order as before calling `setOrder`.
 
 ### Ordered morph-to-many relationships
 

@@ -3,6 +3,7 @@
 namespace Baril\Smoothie\Concerns;
 
 use Baril\Smoothie\GroupException;
+use Baril\Smoothie\OrderableCollection;
 use Baril\Smoothie\PositionException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -65,6 +66,11 @@ trait Orderable
             $model->next()->decrement($model->getOrderColumn());
             \DB::commit();
         });
+    }
+
+    public function newCollection(array $models = [])
+    {
+        return new OrderableCollection($models);
     }
 
     /**

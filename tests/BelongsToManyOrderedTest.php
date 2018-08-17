@@ -148,4 +148,16 @@ class BelongsToManyOrderedTest extends TestCase
         $this->assertEquals(2, $article->tags()->before($this->items[2])->count());
         $this->assertEquals(3, $article->tags()->after($this->items[1])->count());
     }
+
+    public function test_set_order()
+    {
+        $article = $this->articles[0];
+        $this->syncTags(0, [5, 1, 2, 4, 3]);
+        $article->tags()->setOrder([
+            $this->items[3]->id,
+            $this->items[2]->id,
+            $this->items[1]->id,
+        ]);
+        $this->assertTagsForArticle([3, 2, 1, 5, 4], 0);
+    }
 }
