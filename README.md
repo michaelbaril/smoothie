@@ -22,7 +22,7 @@ determine if the date is fuzzy:
 
 ```php
 $date = Baril\Smoothie\Carbon::createFromFormat('Y-m-d', '2010-10-00');
-$date->day; // will return 0
+$date->day; // will return null
 $date->isFuzzy(); // will return true if month and/or day is zero
 ```
 
@@ -89,6 +89,60 @@ return [
     // ...
 ];
 ```
+
+If you don't want to disable strict mode, another option is to use 3 separate
+columns and merge them into one. To achieve this easily, you can use the
+`mergeDate` method in the accessor, and the `splitDate` method is the mutator:
+
+```php
+class Book extends \Illuminate\Database\Eloquent\Model
+{
+    use \Baril\Smoothie\Concerns\HasFuzzyDates;
+
+    public function getReleaseDateAttribute()
+    {
+        return $this->mergeDate(
+            'release_date_year',
+            'release_date_month',
+            'release_date_day'
+        );
+    }
+
+    public function setReleaseDateAttribute($value)
+    {
+        $this->splitDate(
+            $value,
+            'release_date_year',
+            'release_date_month',
+            'release_date_day'
+        );
+    }
+}
+```
+
+The last 2 arguments of both methods can be omitted, if your column names use
+the suffixes `_year`, `_month` and `_day`. The following example is similar as
+the one above:
+
+```php
+class Book extends \Illuminate\Database\Eloquent\Model
+{
+    use \Baril\Smoothie\Concerns\HasFuzzyDates;
+
+    public function getReleaseDateAttribute()
+    {
+        return $this->mergeDate('release_date');
+    }
+
+    public function setReleaseDateAttribute($value)
+    {
+        $this->splitDate($value, 'release_date');
+    }
+}
+```
+
+> :warning: Note: your `_month` and `_day` columns must be nullable, since
+> a "zero" month or day will be stored as `null`.
 
 ## Mutually-belongs-to-many-selves relationship
 

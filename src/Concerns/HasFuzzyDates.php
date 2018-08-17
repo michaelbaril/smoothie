@@ -2,6 +2,7 @@
 
 namespace Baril\Smoothie\Concerns;
 
+use DateTimeInterface;
 use Baril\Smoothie\Carbon;
 
 trait HasFuzzyDates
@@ -52,5 +53,45 @@ trait HasFuzzyDates
             str_replace('.v', '.u', $this->getDateFormat()),
             $value
         );
+    }
+
+    protected function mergeDate($yearAttribute, $monthAttribute = null, $dayAttribute = null)
+    {
+        if (func_num_args() == 1) {
+            $dayAttribute = $yearAttribute . '_day';
+            $monthAttribute = $yearAttribute . '_month';
+            $yearAttribute = $yearAttribute . '_year';
+        }
+
+        $year = $this->attributes[$yearAttribute];
+        $month = $this->attributes[$monthAttribute];
+        $day = $this->attributes[$dayAttribute];
+
+        if (!$year) {
+            return null;
+        }
+        return $this->asDateTime(sprintf('%04d-%02d-%02d', $year, $month, $day));
+    }
+
+    protected function splitDate($value, $yearAttribute, $monthAttribute = null, $dayAttribute = null)
+    {
+        if (func_num_args() == 2) {
+            $dayAttribute = $yearAttribute . '_day';
+            $monthAttribute = $yearAttribute . '_month';
+            $yearAttribute = $yearAttribute . '_year';
+        }
+        if (is_null($value)) {
+            $this->attributes[$yearAttribute]
+                    = $this->attributes[$monthAttribute]
+                    = $this->attributes[$dayAttribute]
+                    = null;
+            return;
+        }
+        if (!($value instanceof Carbon)) {
+            $value = $this->asDateTime($value);
+        }
+        $this->attributes[$yearAttribute] = $value->year;
+        $this->attributes[$monthAttribute] = $value->month;
+        $this->attributes[$dayAttribute] = $value->day;
     }
 }

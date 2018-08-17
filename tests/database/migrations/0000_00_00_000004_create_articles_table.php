@@ -18,6 +18,9 @@ class CreateArticlesTable extends Migration
             $table->unsignedInteger('status_id')->nullable();
             $table->string('title', 100);
             $table->text('body');
+            $table->integer('publication_date_year')->nullable();
+            $table->integer('publication_date_month')->nullable();
+            $table->integer('publication_date_day')->nullable();
             $table->timestamps();
             $table->foreign('status_id')->references('id')->on('statuses');
         });

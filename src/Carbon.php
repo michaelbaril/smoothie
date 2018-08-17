@@ -11,8 +11,8 @@ class Carbon extends LaravelCarbon
 
     public static function create($year = null, $month = null, $day = null, $hour = null, $minute = null, $second = null, $tz = null)
     {
-        $hasMonth = ($month !== 0);
-        $hasDay = ($day !== 0);
+        $hasMonth = !empty($month);
+        $hasDay = !empty($day);
         $month = $hasMonth ? $month : 1;
         $day = $hasDay ? $day : 1;
         $instance = parent::create($year, $month, $day, $hour, $minute, $second, $tz);
@@ -46,9 +46,9 @@ class Carbon extends LaravelCarbon
     {
         switch ($name) {
             case 'month':
-                return ($this->hasMonth ? parent::__get('month') : 0);
+                return ($this->hasMonth ? parent::__get('month') : null);
             case 'day':
-                return ($this->hasDay ? parent::__get('day') : 0);
+                return ($this->hasDay ? parent::__get('day') : null);
             default:
                 return parent::__get($name);
         }
@@ -58,14 +58,14 @@ class Carbon extends LaravelCarbon
     {
         switch ($name) {
             case 'month':
-                $this->hasMonth = ($value !== 0);
-                if ($value === 0) {
+                $this->hasMonth = !empty($value);
+                if (empty($value)) {
                     $value = 1;
                 }
                 break;
             case 'day':
-                $this->hasDay = ($value !== 0);
-                if ($value === 0) {
+                $this->hasDay = !empty($value);
+                if (empty($value)) {
                     $value = 1;
                 }
                 break;

@@ -2,8 +2,7 @@
 
 namespace Baril\Smoothie\Tests;
 
-use Orchestra\Testbench\TestCase;
-
+use Baril\Smoothie\Tests\Models\Article;
 use Baril\Smoothie\Carbon;
 
 class CarbonTest extends TestCase
@@ -52,5 +51,18 @@ class CarbonTest extends TestCase
             ['2010-10-00', '10/2010'],
             ['2010-00-00', '2010'],
         ];
+    }
+
+    public function test_date_in_3_fields()
+    {
+        $article = factory(Article::class)->create();
+
+        $article->publication_date = '2010-01-00';
+        $this->assertEquals(2010, $article->publication_date_year);
+        $this->assertEquals(1, $article->publication_date_month);
+        $this->assertEquals(null, $article->publication_date_day);
+
+        $article->save();
+        $this->assertEquals('2010-01', $article->fresh()->publication_date->format('Y-m-d', 'Y-m', 'Y'));
     }
 }

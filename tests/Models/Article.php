@@ -8,7 +8,7 @@ use Baril\Smoothie\Tests\Models\Tag;
 
 class Article extends Model
 {
-    protected $fillable = ['title', 'body', 'status_id'];
+    protected $fillable = ['title', 'body', 'status_id', 'publication_date'];
 
     public function tags()
     {
@@ -18,5 +18,15 @@ class Article extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function getPublicationDateAttribute()
+    {
+        return $this->mergeDate('publication_date');
+    }
+
+    public function setPublicationDateAttribute($value)
+    {
+        $this->splitDate($value, 'publication_date');
     }
 }
