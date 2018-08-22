@@ -198,16 +198,24 @@ class MutuallyBelongsToManySelves extends BelongsToMany
 
     /**
      * Get a new pivot statement for a given "other" ID.
-     * @todo
      *
      * @param  mixed  $id
      * @return \Illuminate\Database\Query\Builder
      */
     public function newPivotStatementForId($id)
     {
-        return $this->newPivotQuery()
-                ->where($this->relatedPivotKey, $id)
-                ->orWhere($this->foreignPivotKey, $id);
+        $parentId = $this->parent->{$this->parentKey};
+        if ($id > $parentId) {
+            return $this->newPivotQuery()
+                ->where($this->relatedPivotKey, $id);
+        } elseif ($id < $parentId) {
+            return $this->newPivotQuery()
+                ->where($this->foreignPivotKey, $id);
+        } else {
+            // $id == $parentId
+            return $this->newPivotQuery()->where($this->relatedPivotKey, $id)
+                    ->where($this->foreignPivotKey, $id);
+        }
     }
 
     /**
