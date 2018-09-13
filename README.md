@@ -157,6 +157,9 @@ different ways to access the `blog_desc` column:
 * `$model->desc` (because of the `blog_` prefix),
 * `$model->description` (thanks to the explicit alias).
 
+> Note: you can't have an alias (explicit or implicit) for another alias.
+> Aliases are for actual column names only.
+
 ### Collisions and priorities
 
 If an alias collides with a real column name, it will have priority
@@ -244,6 +247,28 @@ The same logic applies to casts and mutators.
 
 > :warning: Note: if you define a cast on the alias and an accessor on the original
 > attribute name, the accessor won't apply to the alias, only the cast will.
+
+### Trait conflict resolution
+
+The `AliasesAttributes` trait overrides the `getAttribute` and `setAttribute`
+methods of Eloquent's `Model` class. If you're using this trait with another
+trait that override the same methods, you can just alias the other trait's
+methods to `getUnaliasedAttribute` and `setUnaliasedAttribute`.
+`AliasesAttributes::getAttribute` and `AliasesAttributes::setAttribute`
+will call `getUnaliasedAttribute` or `setUnaliasedAttribute` once the alias
+is resolved.
+
+```php
+class MyModel extends Model
+{
+    use AliasesAttributes, SomeOtherTrait {
+        AliasesAttributes::getAttribute insteadof SomeOtherTrait;
+        SomeOtherTrait::getAttribute as getUnaliasedAttribute;
+        AliasesAttributes::setAttribute insteadof SomeOtherTrait;
+        SomeOtherTrait::setAttribute as setUnaliasedAttribute;
+    }
+}
+```
 
 ## Fuzzy dates
 

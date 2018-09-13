@@ -10,6 +10,34 @@ use Illuminate\Support\Str;
  */
 trait AliasesAttributes
 {
+    protected function getColumnsPrefix()
+    {
+        return property_exists($this, 'columnsPrefix') ? $this->columnsPrefix : null;
+    }
+
+    /**
+     * Returns the available aliases for this attribute.
+     *
+     * @param string $attribute
+     * @return array
+     */
+    protected function getAliases($attribute = null)
+    {
+        if (!func_num_args()) {
+            return property_exists($this, 'aliases') ? $this->aliases : [];
+        }
+
+        $aliases = [];
+        if (false !== ($alias = array_search($attribute, $this->getAliases() ?? []))) {
+            $aliases[] = $alias;
+        }
+        $columnsPrefix = $this->getColumnsPrefix();
+        if ($columnsPrefix && Str::startsWith($attribute, $columnsPrefix)) {
+            $aliases[] = Str::replaceFirst($columnsPrefix, '', $attribute);
+        }
+        return $aliases;
+    }
+
     /**
      * Returns the name of the actual attribute or false.
      *
@@ -21,28 +49,11 @@ trait AliasesAttributes
         if (array_key_exists($alias, $this->aliases ?? [])) {
             return $this->aliases[$alias];
         }
-        if (($this->columnsPrefix ?? false) && array_key_exists($this->columnsPrefix . $alias, $this->attributes)) {
-            return $this->columnsPrefix . $alias;
+        $columnsPrefix = $this->getColumnsPrefix();
+        if ($columnsPrefix && array_key_exists($columnsPrefix . $alias, $this->attributes)) {
+            return $columnsPrefix . $alias;
         }
         return false;
-    }
-
-    /**
-     * Returns the available aliases for this attribute.
-     *
-     * @param string $attribute
-     * @return array
-     */
-    protected function getAliases($attribute)
-    {
-        $aliases = [];
-        if (false !== ($alias = array_search($attribute, $this->aliases ?? []))) {
-            $aliases[] = $alias;
-        }
-        if (($this->columnsPrefix ?? false) && Str::startsWith($attribute, $this->columnsPrefix)) {
-            $aliases[] = Str::replaceFirst($this->columnsPrefix, '', $attribute);
-        }
-        return $aliases;
     }
 
     /**
