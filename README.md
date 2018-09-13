@@ -4,6 +4,7 @@ Some fruity additions to Laravel's Eloquent:
 
 * [Miscellaneous](#miscellaneous)
 * [Field aliases](#field-aliases)
+* [Accessor cache](#accessor-cache)
 * [Fuzzy dates](#fuzzy-dates)
 * [Mutually-belongs-to-many-selves relationship](#mutually-belongs-to-many-selves-relationship)
 * [Orderable behavior](#orderable-behavior)
@@ -269,6 +270,81 @@ class MyModel extends Model
     }
 }
 ```
+
+## Accessor cache
+
+### Basic usage
+
+Sometimes you define an accessor in your model that requires some computation
+time or executes some queries, and you don't want to go through the whole
+process everytime you call this accessor. That's why this package provides
+a trait that "caches" (in a protected property of the object) the results of
+the accessors.
+
+You can define which accessors are cached using either the `$cacheable` property
+or the `$uncacheable` property. If none of them are set, then everything is
+cached.
+
+```php
+class MyModel extends Model
+{
+    use \Baril\Smoothie\Concerns\CachesAccessors;
+
+    protected $cacheable = [
+        'some_attribute',
+        'some_other_attribute',
+    ];
+}
+
+$model = MyModel::find(1);
+$model->some_attribute; // cached
+$model->yet_another_attribute; // not cached
+```
+
+### Clearing cache
+
+The cache for an attribute is cleared everytime this attribute is set.
+If you have an accessor for an attribute A that depends on another
+attribute B, you probably want to clear A's cache when B is set. You can use
+the `$clearAccessorCache` property to define such dependencies:
+
+```php
+class User extends Model
+{
+    use \Baril\Smoothie\Concerns\CachesAccessors;
+
+    protected $clearAccessorCache = [
+        'first_name' => ['full_name', 'name_with_initial'],
+        'last_name' => ['full_name', 'name_with_initial'],
+    ];
+
+    public function getFullNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function getNameWithInitialAttribute()
+    {
+        return substr($this->first_name, 0, 1) . '. ' . $this->last_name;
+    }
+}
+
+$user = new User([
+    'first_name' => 'Jean',
+    'last_name' => 'Dupont',
+]);
+echo $user->full_name; // "Jean Dupont"
+$user->first_name = 'Lazslo';
+echo $user->full_name; // "Lazslo Dupont": cache has been cleared
+```
+
+### Cache and aliases
+
+If you want to use both [the `AliasesAttributes` trait](#field-aliases) and the
+`CachesAccessors` trait in the same model, the best way to do it is to use
+the `AliasesAttributesWithCache` trait, which merges the features of both
+traits properly. Setting an attribute or an alias will automatically clear
+the accessor cache for all aliases of the same attribute.
 
 ## Fuzzy dates
 
