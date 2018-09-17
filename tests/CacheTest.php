@@ -83,19 +83,19 @@ class CacheTest extends TestCase
     public function cachedProvider()
     {
         return [
-            [new CacheAll],
-            [new CacheAllBut],
-            [new CacheOnly],
-            [new AliasesAndCache],
+            'cache all' => [new CacheAll],
+            'cache all but' => [new CacheAllBut],
+            'cache only' => [new CacheOnly],
+            'aliases and cache' => [new AliasesAndCache],
         ];
     }
 
     public function uncachedProvider()
     {
         return [
-            [new CacheAllBut],
-            [new CacheOnly],
-            [new AliasesAndCache],
+            'cache all but' => [new CacheAllBut],
+            'cache only' => [new CacheOnly],
+            'aliases and cache' => [new AliasesAndCache],
         ];
     }
 }

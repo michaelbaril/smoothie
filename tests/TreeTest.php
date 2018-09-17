@@ -57,9 +57,9 @@ class TreeTest extends TestCase
     public function redundancyProvider()
     {
         return [
-            ['A'],
-            ['AB'],
-            ['ABA'],
+            'A' => ['A'],
+            'AB' => ['AB'],
+            'ABA' => ['ABA'],
         ];
     }
 
