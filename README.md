@@ -99,6 +99,23 @@ you want to use a strict inequality),
 * `$query->updatedBefore($date, $strict = false)`,
 * `$query->updatedBetween($start, $end, $strictStart = false, $strictEnd = false)`.
 
+
+### Debugging
+
+This package adds a `debugSql` method to the `Builder` class. It is similar as
+`toSql` except that it returns an actual SQL query where bindings have been
+replaced with their values.
+
+```php
+Article::where('id', 5)->toSql(); // "SELECT articles WHERE id = ?" -- WTF?
+Article::where('id', 5)->debugSql(); // "SELECT articles WHERE id = 5" -- much better
+```
+
+In order to use this method, you need Smoothie's service provider to be
+registered in your `config\app.php` (or use package auto-discovery).
+
+(Credit for this method goes to [Broutard](https://github.com/Broutard), thanks!)
+
 ## Field aliases
 
 ### Basic usage
