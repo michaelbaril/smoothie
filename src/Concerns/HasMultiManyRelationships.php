@@ -161,7 +161,7 @@ trait HasMultiManyRelationships
 
         $localKey = $localKey ?: $this->getKeyName();
 
-        return new WrapMultiMany($relations, $instance->newQuery(), $this, $instance->getTable().'.'.$foreignKey, $localKey);
+        return new WrapMultiMany($relations, $instance->newQuery(), $this, $foreignKey, $localKey);
     }
 
     /**

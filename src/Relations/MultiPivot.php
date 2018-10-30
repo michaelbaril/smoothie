@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class MultiPivot extends Pivot
 {
     protected $multiRelations = [];
+    public $timestamps = false;
+    protected $createdAt = self::CREATED_AT;
+    protected $updatedAt = self::UPDATED_AT;
 
     public function setMultiRelations($relations)
     {
@@ -58,5 +61,41 @@ class MultiPivot extends Pivot
     public function newInstance($attributes = [], $exists = false)
     {
         return parent::newInstance($attributes, $exists)->setMultiRelations($this->multiRelations);
+    }
+
+    /**
+     * Specify that the pivot table has creation and update timestamps.
+     *
+     * @param  mixed  $createdAt
+     * @param  mixed  $updatedAt
+     * @return $this
+     */
+    public function withTimestamps($createdAt = null, $updatedAt = null)
+    {
+        $this->timestamps = true;
+        $this->createdAt = $createdAt ?? $this->createdAt;
+        $this->updatedAt = $updatedAt ?? $this->updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get the name of the "created at" column.
+     *
+     * @return string
+     */
+    public function getCreatedAtColumn()
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * Get the name of the "updated at" column.
+     *
+     * @return string
+     */
+    public function getUpdatedAtColumn()
+    {
+        return $this->updatedAt;
     }
 }

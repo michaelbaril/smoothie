@@ -48,11 +48,24 @@ $factory->define(Baril\Smoothie\Tests\Models\Country::class, function (Faker $fa
     ];
 });
 
-$factory->define(Baril\Smoothie\Tests\Models\Person::class, function (Faker $faker) {
-    $country = Baril\Smoothie\Tests\Models\Country::all()->random();
+$factory->define(Baril\Smoothie\Tests\Models\User::class, function (Faker $faker) {
+    $countries = Baril\Smoothie\Tests\Models\Country::all();
+    $country = $countries->count() ? $countries->random()->id : null;
     return [
         'first_name' => $faker->firstName,
         'last_name' => $faker->lastName,
-        'birth_country_id' => $country ? $country->id : null,
+        'birth_country_id' => $country,
+    ];
+});
+
+$factory->define(Baril\Smoothie\Tests\Models\Project::class, function (Faker $faker) {
+    return [
+        'name' => $faker->word,
+    ];
+});
+
+$factory->define(Baril\Smoothie\Tests\Models\Role::class, function (Faker $faker) {
+    return [
+        'name' => $faker->word,
     ];
 });

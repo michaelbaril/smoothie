@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateCountryPersonTable extends Migration
+class CreateCountryUserTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateCountryPersonTable extends Migration
      */
     public function up()
     {
-        Schema::create('country_person', function (Blueprint $table) {
-            $table->unsignedInteger('person_id');
+        Schema::create('country_user', function (Blueprint $table) {
+            $table->unsignedInteger('user_id');
             $table->unsignedInteger('country_id');
-            $table->foreign('person_id')->references('id')->on('people');
+            $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('country_id')->references('id')->on('countries');
         });
     }
@@ -28,6 +28,6 @@ class CreateCountryPersonTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('country_person');
+        Schema::dropIfExists('country_user');
     }
 }

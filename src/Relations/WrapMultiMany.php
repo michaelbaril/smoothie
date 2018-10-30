@@ -2,6 +2,7 @@
 
 namespace Baril\Smoothie\Relations;
 
+use Baril\Smoothie\Relations\MultiPivot;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +12,7 @@ class WrapMultiMany extends HasMany
 {
     /**
      * The multi-many relationships that are "wrapped" into $this.
-     * 
+     *
      * @var Collection
      */
     protected $relations;
@@ -22,14 +23,14 @@ class WrapMultiMany extends HasMany
      * @var string
      */
     protected $table;
-    
+
     /**
      * The primary key of the pivot table.
      *
      * @var string
      */
     protected $pivotKey;
-    
+
     /**
      * Indicates if timestamps are available on the pivot table.
      *
@@ -108,8 +109,12 @@ class WrapMultiMany extends HasMany
     {
         $results = $this->query->get($columns);
         $relations = $this->getBelongsToRelations();
-        $results->each(function($pivot) use ($relations) {
+        list($createdAt, $updatedAt) = [$this->createdAt(), $this->updatedAt()];
+        $results->each(function($pivot) use ($relations, $createdAt, $updatedAt) {
             $pivot->setMultiRelations($relations);
+            if ($this->withTimestamps) {
+                $pivot->withTimestamps($createdAt, $updatedAt);
+            }
         });
         return $results;
     }
@@ -146,7 +151,9 @@ class WrapMultiMany extends HasMany
         $this->pivotCreatedAt = $createdAt;
         $this->pivotUpdatedAt = $updatedAt;
 
-        return $this;        
+        $this->query->getModel()->withTimestamps($this->createdAt(), $this->updatedAt());
+
+        return $this;
     }
 
     /**
@@ -167,7 +174,7 @@ class WrapMultiMany extends HasMany
     public function updatedAt()
     {
         return $this->pivotUpdatedAt ?: $this->parent->getUpdatedAtColumn();
-    }    
+    }
 
     /**
      * Get all of the IDs from the given mixed value.
@@ -182,7 +189,7 @@ class WrapMultiMany extends HasMany
         }
         return collect($value)->mapWithKeys(function ($item, $key) {
             if ($item instanceof MultiPivot) {
-                $item = $item->getAttributes(); 
+                $item = $item->getAttributes();
             }
             $ids = [];
             $this->relations->each(function ($relation, $name) use ($item, &$ids) {
@@ -196,7 +203,7 @@ class WrapMultiMany extends HasMany
             return [$key => $ids];
         })->toArray();
     }
-    
+
     /**
      * Attach a model to the parent.
      *
@@ -214,7 +221,7 @@ class WrapMultiMany extends HasMany
             $this->parseIds($id), $attributes
         ));
     }
-    
+
     /**
      * Create an array of records to insert into the pivot table.
      *
@@ -250,15 +257,27 @@ class WrapMultiMany extends HasMany
 
         return $record;
     }
-    
-    protected function cleanRecord(array $record)
+
+    protected function cleanRecord($record)
     {
-        $this->relations->each(function ($relation, $name) use (&$record) {
-            if (array_key_exists($name, $record)) {
-                unset($record[$name]);
+        if ($record instanceof MultiPivot) {
+            $record = $record->getAttributes();
+        }
+
+        $attributesToClean = array_merge(
+            [
+                $this->pivotKey,
+                $this->foreignKey
+            ], $this->relations->keys()->all()
+        );
+
+        foreach ($attributesToClean as $attribute) {
+            if (array_key_exists($attribute, $record)) {
+                unset($record[$attribute]);
             }
-        });
-        return $record;   
+        }
+
+        return $record;
     }
 
     /**
@@ -298,7 +317,7 @@ class WrapMultiMany extends HasMany
         $results = $query->delete();
 
         return $results;
-    }  
+    }
 
     /**
      * Sync the intermediate tables with a list of IDs without detaching.
@@ -329,7 +348,7 @@ class WrapMultiMany extends HasMany
         // if they exist in the array of current ones, and if not we will insert.
         $current = $this->parseIds($this->get()->keyBy($this->pivotKey));
         $parsedIds = $this->parseIds($ids);
-        
+
         $detach = collect($current)->reject(function ($item) use ($parsedIds) {
             return in_array($item, $parsedIds);
         })->toArray();
@@ -342,15 +361,21 @@ class WrapMultiMany extends HasMany
 
             $changes['detached'] = array_values($detach);
         }
-        
+
+        if ($ids instanceof MultiPivot || is_array($ids) && count($ids) && !is_numeric(key($ids))) {
+            $ids = [$ids];
+        }
         foreach ($ids as $record) {
             $pivotId = $this->findExisting($record, $current);
             if ($pivotId) {
                 $query = clone $this->query;
-                $query->where($this->table . '.' . $this->pivotKey, $pivotId)->update($this->addTimestampsToAttachment($this->cleanRecord($record), true));
-                $changes['updated'][] = $record;
+                $cleanedRecord = $this->addTimestampsToAttachment($this->cleanRecord($record), true);
+                if ($cleanedRecord) {
+                    $query->where($this->table . '.' . $this->pivotKey, $pivotId)->update($cleanedRecord);
+                    $changes['updated'][] = $record;
+                }
             } else {
-                $this->attach($record, $record);
+                $this->attach($record, $this->cleanRecord($record));
                 $changes['attached'][] = $record;
             }
         }
@@ -359,7 +384,7 @@ class WrapMultiMany extends HasMany
 
         return $changes;
     }
-    
+
     protected function findExisting($record, $current)
     {
         $ids = $this->parseIds($record)[0];

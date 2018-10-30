@@ -3,7 +3,7 @@
 namespace Baril\Smoothie\Tests;
 
 use Baril\Smoothie\Tests\Models\Country;
-use Baril\Smoothie\Tests\Models\Person;
+use Baril\Smoothie\Tests\Models\User;
 
 class CacheableTest extends TestCase
 {
@@ -92,7 +92,7 @@ class CacheableTest extends TestCase
 
     public function test_belongs_to_relation()
     {
-        $person = factory(Person::class)->create();
+        $person = factory(User::class)->create();
 
         $country = Country::orderBy('id', 'desc')->first();
         $person->birthCountry()->associate($country);
@@ -109,7 +109,7 @@ class CacheableTest extends TestCase
 
     public function test_belongs_to_many_relation()
     {
-        $person = factory(Person::class)->create();
+        $person = factory(User::class)->create();
         $person->citizenships()->attach(Country::all()->slice(0, 2));
         $this->resetQueryCount();
         $this->assertCount(2, $person->citizenships);
