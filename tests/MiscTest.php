@@ -2,6 +2,7 @@
 
 namespace Baril\Smoothie\Tests;
 
+use Baril\Smoothie\Tests\Models\Article;
 use Baril\Smoothie\Tests\Models\Status;
 use Baril\Smoothie\Tests\Models\Tag;
 
@@ -26,5 +27,14 @@ class MiscTest extends TestCase
 
         $sameModel->save(['restore' => true]);
         $this->assertEquals('toto', $model->fresh()->name);
+    }
+
+    public function test_update_only()
+    {
+        $article = factory(Article::class)->create(['title' => 'old title', 'body' => 'old body']);
+        $article->body = 'new body';
+        $this->assertTrue($article->updateOnly(['title' => 'new title']));
+        $this->assertEquals('new title', $article->title);
+        $this->assertEquals('old body', $article->fresh()->body);
     }
 }

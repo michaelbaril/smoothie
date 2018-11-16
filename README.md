@@ -45,6 +45,35 @@ $model1->save(['restore' => true]); // the original title will be restored
 To use this option, you need your model to extend the `Baril\Smoothie\Model`
 class instead of `Illuminate\Database\Eloquent\Model`.
 
+### Update only
+
+Laravel's native `update` method will not only update the provided fields, but
+also whatever properties of the model were previously modified:
+
+```php
+$article = Article::create(['title' => 'old title']);
+$article->title = 'new title';
+$article->update(['subtitle' => 'new subtitle']);
+
+$article->fresh()->title; // "new title"
+```
+
+This package provides another method called `updateOnly`, that will update
+the provided fields but leave the rest of the row alone:
+
+```php
+$article = Article::create(['title' => 'old title']);
+$article->title = 'new title';
+$article->updateOnly(['subtitle' => 'new subtitle']);
+
+$article->fresh()->title; // "old title"
+$article->title; // "new title"
+$article->subtitle; // "new subtitle"
+```
+
+To use this method, you need your model to extend the `Baril\Smoothie\Model`
+class instead of `Illuminate\Database\Eloquent\Model`.
+
 ### Explicitly order the query results
 
 The package adds the following method to Eloquent collections:

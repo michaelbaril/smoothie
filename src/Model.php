@@ -30,4 +30,21 @@ class Model extends LaravelModel
 
         return parent::save($options);
     }
+
+    /**
+     * Update only the provided attributes in the database.
+     *
+     * @param array $attributes
+     * @param array $options
+     * @return boolean
+     */
+    public function updateOnly(array $attributes = [], array $options = [])
+    {
+        if (null !== ($fresh = $this->fresh()) && $fresh->update($attributes, $options)) {
+            $this->fill($attributes);
+            $this->original = $fresh->original;
+            return true;
+        }
+        return false;
+    }
 }
