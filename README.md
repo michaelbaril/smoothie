@@ -1284,9 +1284,11 @@ The trait defines the following relationships (which can't be renamed for now):
 * `parent`: `BelongsTo` relation to the parent,
 * `children`: `HasMany` relation to the children,
 * `ancestors`: `BelongsToMany` relation to the ancestors,
+* `ancestorsWithSelf`: `BelongsToMany` relation to the ancestors, including $this,
 * `descendants`: `BelongsToMany` relation to the descendants.
+* `descendantsWithSelf`: `BelongsToMany` relation to the descendants, including $this.
 
-> :warning: Note: The `ancestors` and `descendants` relations are read-only!
+> :warning: Note: The `ancestors` and `descendants` (and `-WithSelf`) relations are read-only!
 > Trying to use the `attach` or `detach` method on them will corrupt the data.
 
 The `ancestors` and `descendants` relations can be ordered by depth (ie. with

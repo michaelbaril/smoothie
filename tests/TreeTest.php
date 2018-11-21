@@ -36,12 +36,20 @@ class TreeTest extends TestCase
         $expected[] = $this->tags['ABA']->id;
         $this->assertEquals($expected, $this->tags['A']->descendants()->orderByDepth()->pluck('id')->toArray());
 
+        // descendantsWithSelf
+        array_unshift($expected, $this->tags['A']->id);
+        $this->assertEquals($expected, $this->tags['A']->descendantsWithSelf()->orderByDepth()->pluck('id')->toArray());
+
         // ancestors
         $expected = [
             $this->tags['AB']->id,
             $this->tags['A']->id,
         ];
-        $this->assertEquals($expected, $this->tags['ABA']->ancestors->pluck('id')->toArray());
+        $this->assertEquals($expected, $this->tags['ABA']->ancestors()->orderByDepth()->pluck('id')->toArray());
+
+        // ancestorsWithSelf
+        array_unshift($expected, $this->tags['ABA']->id);
+        $this->assertEquals($expected, $this->tags['ABA']->ancestorsWithSelf()->orderByDepth()->pluck('id')->toArray());
     }
 
     /**

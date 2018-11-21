@@ -97,33 +97,45 @@ trait BelongsToTree
     }
 
     /**
-     * @param bool $ordered
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function ancestors()
+    public function ancestorsWithSelf()
     {
         return $this->belongsToMany(
             static::class,
             $this->getClosureTable(),
             'descendant_id',
             'ancestor_id'
-        )->as('closure')->withPivot('depth')->wherePivot('depth', '>', 0);
+        )->as('closure')->withPivot('depth');
     }
 
     /**
-     * @param bool $ordered
-     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function descendants()
+    public function ancestors()
+    {
+        return $this->ancestorsWithSelf()->wherePivot('depth', '>', 0);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function descendantsWithSelf()
     {
         return $this->belongsToMany(
             static::class,
             $this->getClosureTable(),
             'ancestor_id',
             'descendant_id'
-        )->as('closure')->withPivot('depth')->wherePivot('depth', '>', 0);
+        )->as('closure')->withPivot('depth');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function descendants()
+    {
+        return $this->descendantsWithSelf()->wherePivot('depth', '>', 0);
     }
 
     /**
