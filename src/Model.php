@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model as LaravelModel;
 class Model extends LaravelModel
 {
     use Concerns\AliasesAttributes;
+    use Concerns\CachesRelationships;
     use Concerns\HasFuzzyDates;
     use Concerns\HasMultiManyRelationships;
     use Concerns\HasMutualSelfRelationships;
