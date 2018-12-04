@@ -6,6 +6,8 @@ use LogicException;
 use Baril\Smoothie\Relations\BelongsToMultiMany;
 use Baril\Smoothie\Relations\MultiPivot as Pivot;
 use Baril\Smoothie\Relations\WrapMultiMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -69,10 +71,41 @@ trait HasMultiManyRelationships
             $table = $this->joiningTable($related);
         }
 
-        return new BelongsToMultiMany(
+        return $this->newBelongsToMultiMany(
             $instance->newQuery(), $this, $table, $pivotKey, $foreignPivotKey,
             $relatedPivotKey, $parentKey ?: $this->getKeyName(),
             $relatedKey ?: $instance->getKeyName(), $relation
+        );
+    }
+
+   /**
+     * Instantiate a new BelongsToMultiMany relationship.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Model  $parent
+     * @param  string  $table
+     * @param  string  $pivotKey
+     * @param  string  $foreignPivotKey
+     * @param  string  $relatedPivotKey
+     * @param  string  $parentKey
+     * @param  string  $relatedKey
+     * @param  string  $relationName
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    protected function newBelongsToMultiMany(
+        Builder $query,
+        Model $parent,
+        $table,
+        $pivotKey,
+        $foreignPivotKey,
+        $relatedPivotKey,
+        $parentKey,
+        $relatedKey,
+        $relationName = null
+    ) {
+        return new BelongsToMultiMany(
+            $query, $parent, $table, $pivotKey, $foreignPivotKey,
+            $relatedPivotKey, $parentKey, $relatedKey, $relationName
         );
     }
 
