@@ -35,6 +35,16 @@ class WrapMultiMany extends HasMany
     }
 
     /**
+     * Get the intermediate table for the relationships.
+     *
+     * @return string
+     */
+    public function getTable()
+    {
+        return $this->query->getModel()->getTable();
+    }
+
+    /**
      * Get the results of the relationship (overriden because the original
      * method would call $query->get() directly, bypassing $this->get()).
      *
@@ -78,5 +88,26 @@ class WrapMultiMany extends HasMany
                 return $pivot->belongsTo($related, $foreignKey, $ownerKey, $relationName);
             }];
         })->toArray();
+    }
+
+    public function sync($pivots)
+    {
+        $this->delete();
+        foreach ($pivots as $pivot) {
+            $this->createPivot($pivot);
+        }
+    }
+
+    protected function createPivot($pivot)
+    {
+        $this->relations->each(function ($relation, $name) use (&$pivot) {
+            if (array_key_exists($name, $pivot)) {
+                $pivot[$relation->getRelatedPivotKeyName()] = $pivot[$name];
+                unset($pivot[$name]);
+            }
+        });
+        $instance = $this->related->newInstance($pivot)->setTable($this->getTable());
+        $this->setForeignAttributesForCreate($instance);
+        $instance->save();
     }
 }
