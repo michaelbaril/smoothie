@@ -145,13 +145,17 @@ trait HasMultiManyRelationships
         $pivotTables = $relations->map(function($relation) {
             return $relation->getTable();
         })->unique();
+        $primaryKeys = $relations->map(function($relation) {
+            return $relation->getPivotKeyName();
+        })->unique();
 
-        if ($pivotTables->count() > 1) {
-            throw new \InvalidArgumentException('The provided relations don\'t have the same pivot table.');
+        if ($pivotTables->count() > 1 || $primaryKeys->count() > 1) {
+            throw new \InvalidArgumentException('The provided relations can\'t be wrapped together because their definitions conflict.');
         }
 
         $pivotTable = $pivotTables->first();
-        $instance = (new Pivot)->setTable($pivotTable);
+        $primaryKey = $primaryKeys->first();
+        $instance = (new Pivot)->setTable($pivotTable)->setKeyName($primaryKey);
 
         $foreignKey = $foreignKey ?: $this->getForeignKey();
 
