@@ -11,6 +11,7 @@ class MultiPivot extends Pivot
     public function setMultiRelations($relations)
     {
         $this->multiRelations = $relations;
+        return $this;
     }
 
     /**
@@ -45,5 +46,17 @@ class MultiPivot extends Pivot
         if (array_key_exists($key, $this->multiRelations)) {
             return $this->getRelationshipFromMethod($key);
         }
+    }
+
+    /**
+     * Create a new instance of the given model.
+     *
+     * @param  array  $attributes
+     * @param  bool  $exists
+     * @return static
+     */
+    public function newInstance($attributes = [], $exists = false)
+    {
+        return parent::newInstance($attributes, $exists)->setMultiRelations($this->multiRelations);
     }
 }

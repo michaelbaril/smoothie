@@ -827,6 +827,78 @@ $user->projects()->first()->roles()->all()->detach($admin);
 // whoever the user is.
 ```
 
+### Multi-many relations "wrapper"
+
+The `WrapMultiMany` relation provides an alternative way to handle multi-many
+relations. It can be used together with the `BelongsToMultiMany` relations or
+independantly.
+
+Instead of looking at the ternary relation as six many-to-many relations that can
+be chained after another, we could look at it this way:
+
+* a user has many role/project pairs,
+* each of these pairs has one role and one project.
+
+Of course, similarly, a role has many user/project pairs and a project has many
+role/user pairs.
+
+To implement this, we could create a model for the pivot table and then define
+all relations manually, but the `WrapMultiMany` relation provides a quicker
+alternative.
+
+```php
+class User extends Model
+{
+    use HasMultiManyRelationships;
+
+    public function authorizations()
+    {
+        return $this->wrapMultiMany([
+            'project' => $this->belongsToMultiMany(Project::class, 'project_role_user'),
+            'role' => $this->belongsToMultiMany(Role::class, 'project_role_user'),
+        ]);
+    }
+}
+```
+
+The `authorizations` method above defines the following relations:
+* a `HasMany` relation from `User` to the pivot table,
+* a `BelongsTo` relation named `project`, from the pivot table to `Project`,
+* a `BelongsTo` relation named `role`, from the pivot table to `Role`.
+
+You can query the relations like any regular relation, and even eager-load them:
+
+```php
+$users = User::with('authorizations', 'authorizations.role', 'authorizations.project')->get();
+
+foreach ($users as $user) {
+    foreach ($user->authorizations as $authorization) {
+        dump($authorization->role);
+        dump($authorization->project);
+    }
+}
+```
+
+You can use the following methods to insert or update data in the pivot table:
+
+```php
+$user->authorizations()->attach($pivots, $additionalAttributes);
+$user->authorizations()->sync($pivots);
+$user->authorizations()->detach($pivots);
+```
+
+The `$pivots` argument can be of different types:
+
+```php
+$pivots = $user->authorizations->first(); // a Model
+$pivots = $user->authorizations->slice(0, 2); // an EloquentCollection of Models
+$pivots = ['role_id' => $roleId, 'project_id' => $projectId]; // an associative array keyed by the column names...
+$pivots = ['role' => $roleId, 'project' => $projectId]; // ... or the relation names
+$pivots = ['role' => Role::first(), 'project' => Project::first()]; // ... where values can be ids or Models
+$pivots = [ ['role_id' => $roleId, 'project_id' => $projectId] ]; // an array of such associative arrays
+$pivots = collect([ ['role_id' => $roleId, 'project_id' => $projectId] ]); // or even a Collection
+```
+
 ## Orderable behavior
 
 Adds orderable behavior to Eloquent models (forked from
