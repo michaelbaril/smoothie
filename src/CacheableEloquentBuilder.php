@@ -30,6 +30,23 @@ class CacheableEloquentBuilder extends Builder
         return $results;
     }
 
+    /**
+     * Get an array with the values of a given column.
+     *
+     * @param  string  $column
+     * @param  string|null  $key
+     * @return \Illuminate\Support\Collection
+     */
+    public function pluck($column, $key = null)
+    {
+        if ($this->query->usesCache) {
+            $class = get_class($this->getModel());
+            $results = $class::allFromCache();
+            return $results->pluck($column, $key);
+        }
+        return parent::pluck($column, $key);
+    }
+
     public static function makeFrom(Builder $query)
     {
         $cachedQuery = new static($query->query);

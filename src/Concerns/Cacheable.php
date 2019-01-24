@@ -17,6 +17,7 @@ trait Cacheable
         'firstOrCreate',
         'firstOrFail',
         'firstOr',
+        'pluck',
     ];
     protected static $cacheTags = ['setup'];
 
