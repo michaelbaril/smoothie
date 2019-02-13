@@ -6,13 +6,15 @@ use Illuminate\Database\Eloquent\Model as LaravelModel;
 
 class Model extends LaravelModel
 {
-    use Concerns\AliasesAttributes;
-    use Concerns\CachesRelationships;
-    use Concerns\HasFuzzyDates;
-    use Concerns\HasMultiManyRelationships;
-    use Concerns\HasMutualSelfRelationships;
-    use Concerns\HasOrderedRelationships;
-    use Concerns\ScopesTimestamps;
+    use Concerns\AliasesAttributes,
+        Concerns\CachesRelationships,
+        Concerns\HasFuzzyDates,
+        Concerns\HasMultiManyRelationships,
+        Concerns\HasMutualSelfRelationships,
+        Concerns\HasOrderedRelationships,
+        Concerns\ScopesTimestamps {
+        Concerns\CachesRelationships::newBelongsToMultiMany insteadof Concerns\HasMultiManyRelationships;
+    }
 
     /**
      * Save the model to the database.

@@ -2,6 +2,7 @@
 
 namespace Baril\Smoothie\Concerns;
 
+use Baril\Smoothie\Relations\Closure;
 use Baril\Smoothie\TreeException;
 use Illuminate\Support\Str;
 
@@ -101,12 +102,17 @@ trait BelongsToTree
      */
     public function ancestorsWithSelf()
     {
-        return $this->belongsToMany(
-            static::class,
+        $instance = $this->newRelatedInstance(static::class);
+        return (new Closure(
+            $instance->newQuery(),
+            $this,
             $this->getClosureTable(),
             'descendant_id',
-            'ancestor_id'
-        )->as('closure')->withPivot('depth');
+            'ancestor_id',
+            $this->getKeyName(),
+            $instance->getKeyName(),
+            'ancestorsWithSelf'
+        ))->as('closure')->withPivot('depth');
     }
 
     /**
@@ -114,7 +120,7 @@ trait BelongsToTree
      */
     public function ancestors()
     {
-        return $this->ancestorsWithSelf()->wherePivot('depth', '>', 0);
+        return $this->ancestorsWithSelf()->setRelationName('ancestors')->wherePivot('depth', '>', 0);
     }
 
     /**
@@ -122,12 +128,17 @@ trait BelongsToTree
      */
     public function descendantsWithSelf()
     {
-        return $this->belongsToMany(
-            static::class,
+        $instance = $this->newRelatedInstance(static::class);
+        return (new Closure(
+            $instance->newQuery(),
+            $this,
             $this->getClosureTable(),
             'ancestor_id',
-            'descendant_id'
-        )->as('closure')->withPivot('depth');
+            'descendant_id',
+            $this->getKeyName(),
+            $instance->getKeyName(),
+            'descendantsWithSelf'
+        ))->as('closure')->withPivot('depth');
     }
 
     /**
@@ -135,7 +146,7 @@ trait BelongsToTree
      */
     public function descendants()
     {
-        return $this->descendantsWithSelf()->wherePivot('depth', '>', 0);
+        return $this->descendantsWithSelf()->setRelationName('descendants')->wherePivot('depth', '>', 0);
     }
 
     /**
@@ -179,10 +190,8 @@ trait BelongsToTree
         });
 
         // Prevents an unneeded query in case we try to access the children of a leaf.
-        // Problem: if the "withDescendants" scope was called with a $depth, the
-        // "leafs" are not actual leafs...
         $descendants->each(function ($item, $key) {
-            if (!$item->relationLoaded('children')) {
+            if (!$item->relationLoaded('children') && $item->closure->remaining_depth !== 0) {
                 $item->setRelation('children', collect([]));
             }
         });
@@ -204,10 +213,14 @@ trait BelongsToTree
         if (!$ancestors->count()) {
             return;
         }
+        $this->setRelation('parent', $ancestors->first());
         for ($i = 0; $i < count($ancestors) - 1; $i++) {
             $ancestors[$i]->setRelation('parent', $ancestors[$i + 1]);
         }
-        $this->setRelation('parent', $ancestors->first());
+        $olderAncestor = $ancestors->last();
+        if ($olderAncestor->closure->remaining_depth !== 0) {
+            $olderAncestor->setRelation('parent', null);
+        }
     }
 
     // =========================================================================
@@ -301,8 +314,9 @@ trait BelongsToTree
     {
         $query->with(['ancestors' => function ($query) use ($depth, $constraints) {
             if ($depth !== null) {
-                $query->where($this->getClosureTable() . '.depth', '<=', $depth)
-                       ->orderByDepth();
+                $query->setDepth($depth)
+                      ->where($this->getClosureTable() . '.depth', '<=', $depth)
+                      ->orderByDepth();
             }
             if ($constraints !== null) {
                 $constraints($query);
@@ -314,7 +328,8 @@ trait BelongsToTree
     {
         $query->with(['descendants' => function ($query) use ($depth, $constraints) {
             if ($depth !== null) {
-                $query->where($this->getClosureTable() . '.depth', '<=', $depth)
+                $query->setDepth($depth)
+                      ->where($this->getClosureTable() . '.depth', '<=', $depth)
                       ->orderByDepth();
             }
             if ($constraints !== null) {
