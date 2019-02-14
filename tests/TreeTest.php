@@ -106,7 +106,16 @@ class TreeTest extends TestCase
         $this->assertCount(3, $tags[0]->descendants);
         $this->assertCount(2, $tags[0]->children);
         $this->assertCount(1, $tags[0]->children[1]->children);
+        $this->assertCount(0, $tags[0]->children[1]->children[0]->children);
         $this->assertEquals($count, count(\DB::getQueryLog())); // checking that no new query has been necessary
+    }
+
+    public function test_with_descendants_and_limited_depth()
+    {
+        $tags = Tag::withDescendants(1)->whereKey($this->tags['A']->id)->get();
+        $this->assertCount(2, $tags[0]->descendants);
+        $this->assertTrue($tags[0]->relationLoaded('children'));
+        $this->assertFalse($tags[0]->children[1]->relationLoaded('children'));
     }
 
     public function test_with_ancestors()
@@ -116,7 +125,16 @@ class TreeTest extends TestCase
         $count = count(\DB::getQueryLog());
         $this->assertCount(2, $tags[0]->ancestors);
         $this->assertEquals($this->tags['A']->id, $tags[0]->parent->parent->id);
+        $this->assertNull($tags[0]->parent->parent->parent);
         $this->assertEquals($count, count(\DB::getQueryLog())); // checking that no new query has been necessary
+    }
+
+    public function test_with_ancestors_and_limited_depth()
+    {
+        $tags = Tag::withAncestors(1)->whereKey($this->tags['ABA']->id)->get();
+        $this->assertCount(1, $tags[0]->ancestors);
+        $this->assertTrue($tags[0]->relationLoaded('parent'));
+        $this->assertFalse($tags[0]->parent->relationLoaded('parent'));
     }
 
     public function test_order_by_depth()
