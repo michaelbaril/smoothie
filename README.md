@@ -1391,6 +1391,15 @@ foreach ($tags as $tag) {
 
 Of course, same goes with the `ancestors` and `parent` relations.
 
+You can retrieve the whole tree with this method:
+
+```php
+$tags = Tag::getTree();
+```
+
+It will return a collection of the root elements, with the `children` relation
+eager-loaded on every element up to the leafs.
+
 ### Methods
 
 The trait defines the following methods (all of which return a boolean):

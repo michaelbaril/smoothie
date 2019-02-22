@@ -399,6 +399,18 @@ trait BelongsToTree
     // =========================================================================
 
     /**
+     * Shortcut method that returns a collection of the tree roots, with their
+     * eager-loaded descendants.
+     *
+     * @param int $depth
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getTree($depth = null)
+    {
+        return static::query()->whereIsRoot()->withDescendants($depth)->get();
+    }
+
+    /**
      * Return the depth of the tree (0 if the tree is flat).
      *
      * @return int
