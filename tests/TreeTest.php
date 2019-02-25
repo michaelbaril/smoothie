@@ -163,6 +163,14 @@ class TreeTest extends TestCase
         $this->assertFalse($tags[0]->parent->relationLoaded('parent'));
     }
 
+    public function test_with_depth()
+    {
+        $tags = Tag::withDepth()->get()->pluck('depth', 'id');
+        $this->assertEquals(2, $tags[$this->tags['ABA']->id]);
+        $tags = Tag::withDepth('alias')->get()->pluck('alias', 'id');
+        $this->assertEquals(1, $tags[$this->tags['AA']->id]);
+    }
+
     public function test_order_by_depth()
     {
         $this->tags['AA']->parent()->associate($this->tags['ABA'])->save(); // AA's parent is now ABA

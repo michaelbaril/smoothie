@@ -1435,6 +1435,8 @@ multiple roots),
 (eg. `$query->withAncestors(1)` will only load the direct parent). Optionally,
 you can pass additional `$constraints`.
 * `withDescendants($depth = null, $constraints = null)`.
+* `withDepth($as = 'depth')`: will add a `depth` column (or whatever alias
+you provided) on your resulting models.
 * `whereIsRoot($bool = true)`: limits the query to the items with no parent (the
 behavior of the scope can be reversed by setting the `$bool` argument to
 `false`).

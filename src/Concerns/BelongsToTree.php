@@ -393,6 +393,11 @@ trait BelongsToTree
         }]);
     }
 
+    public function scopeWithDepth($query, $as = 'depth')
+    {
+        $query->withCount('ancestors as ' . $as);
+    }
+
     public function scopeWhereIsRoot($query, $bool = true)
     {
         $query->where($this->getParentForeignKeyName(), ($bool ? '=' : '!='), null);
