@@ -1285,7 +1285,7 @@ class File extends \Illuminate\Database\Eloquent\Model
 }
 ```
 
-### Artisan command
+### Artisan commands
 
 > Note: you need to configure your model as described above before you use these
 > commands.
@@ -1318,6 +1318,14 @@ php artisan smoothie:fix-tree "App\\YourModel"
 
 It will truncate the table and fill it again based on the data from the main
 table.
+
+Finally, the `show-tree` command provides a quick-and-easy way to output the
+content of the tree. It takes a `label` parameter that defines which column
+(or accessor) to use as label. Optionally you can also specify a max depth.
+
+```bash
+php artisan smoothie:show-tree "App\\YourModel" --label=name --depth=3
+```
 
 ### Basic usage
 
