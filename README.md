@@ -1370,7 +1370,7 @@ The trait defines the following relationships (which can't be renamed for now):
 * `descendantsWithSelf`: `BelongsToMany` relation to the descendants, including $this.
 
 > :warning: Note: The `ancestors` and `descendants` (and `-WithSelf`) relations are read-only!
-> Trying to use the `attach` or `detach` method on them will corrupt the data.
+> Trying to use the `attach` or `detach` method on them will throw an exception.
 
 The `ancestors` and `descendants` relations can be ordered by depth (ie. with
 the direct parent/children first):
