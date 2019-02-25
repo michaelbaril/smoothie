@@ -6,6 +6,7 @@ use Baril\Smoothie\Console\FixPivotsCommand;
 use Baril\Smoothie\Console\FixPositionsCommand;
 use Baril\Smoothie\Console\FixTreeCommand;
 use Baril\Smoothie\Console\GrowTreeCommand;
+use Baril\Smoothie\Console\ShowTreeCommand;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
@@ -20,6 +21,7 @@ class SmoothieServiceProvider extends ServiceProvider
             FixPositionsCommand::class,
             FixTreeCommand::class,
             GrowTreeCommand::class,
+            ShowTreeCommand::class,
         ]);
 
         Builder::macro('debugSql', function() {

@@ -85,6 +85,32 @@ class TreeTest extends TestCase
         $this->assertFalse($this->tags['ABA']->isChildOf($this->tags['AA']));
     }
 
+    public function test_common_ancestor()
+    {
+        $this->assertNull($this->tags['A']->commonAncestorWith($this->tags['B']));
+        $this->assertEquals($this->tags['A']->id, $this->tags['ABA']->commonAncestorWith($this->tags['AA'])->id);
+        $this->assertEquals($this->tags['A']->id, $this->tags['ABA']->commonAncestorWith($this->tags['A'])->id);
+        $this->assertEquals($this->tags['A']->id, $this->tags['A']->commonAncestorWith($this->tags['AA'])->id);
+    }
+
+    public function test_distance_exception()
+    {
+        $this->expectException(TreeException::class);
+        $this->tags['A']->distanceTo($this->tags['B']);
+    }
+
+    public function test_distance_and_depth()
+    {
+        $this->assertEquals(0, $this->tags['AB']->distanceTo($this->tags['AB']));
+        $this->assertEquals(2, $this->tags['ABA']->distanceTo($this->tags['A']));
+        $this->assertEquals(3, $this->tags['AA']->distanceTo($this->tags['ABA']));
+        $this->assertEquals(0, $this->tags['A']->depth());
+        $this->assertEquals(2, $this->tags['ABA']->depth());
+        $this->assertEquals(2, $this->tags['A']->subtreeDepth());
+        $this->assertEquals(1, $this->tags['AB']->subtreeDepth());
+        $this->assertEquals(0, $this->tags['ABA']->subtreeDepth());
+    }
+
     public function test_scopes()
     {
         $this->assertEquals(2, Tag::whereIsRoot()->count());

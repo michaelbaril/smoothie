@@ -1402,7 +1402,7 @@ eager-loaded on every element up to the leafs.
 
 ### Methods
 
-The trait defines the following methods (all of which return a boolean):
+The trait defines the following methods:
 
 * `isRoot()`: returns `true` if the item's `parent_id` is `null`,
 * `isLeaf()`: checks if the item is a leaf (ie. has no children),
@@ -1412,7 +1412,13 @@ albeit more readable,
 * `isParentOf($item)`,
 * `isDescendantOf($item)`,
 * `isAncestorOf($item)`,
-* `isSiblingOf($item)`.
+* `isSiblingOf($item)`,
+* `commonAncestorWith($item)`: returns the first common ancestor between 2 items,
+or `null` if they don't have a common ancestor (which can happen if the tree has
+multiple roots),
+* `distanceTo($item)`: returns the "distance" between 2 items,
+* `depth()`: returns the depth of the item in the tree,
+* `subtreeDepth()`: returns the depth of the subtree of which the item is the root.
 
 ### Query scopes
 

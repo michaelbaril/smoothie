@@ -306,6 +306,61 @@ trait BelongsToTree
         return $item->$parentKey == $this->$parentKey;
     }
 
+    /**
+     * Returns the closest common ancestor with the provided $item.
+     * May return null if the tree has multiple roots and the 2 items have no
+     * common ancestor.
+     *
+     * @param static $item
+     * @return static|null
+     */
+    public function commonAncestorWith($item)
+    {
+        return $this->ancestorsWithSelf()->whereIsAncestorOf($item->getKey(), null, true)->first();
+    }
+
+    /**
+     * Returns the distance between $this and another $item.
+     * May throw an exception if the tree has multiple roots and the 2 items
+     * have no common ancestor.
+     *
+     * @param static $item
+     * @return int
+     * @throws TreeException
+     */
+    public function distanceTo($item)
+    {
+        $commonAncestor = $this->commonAncestorWith($item);
+        if (!$commonAncestor) {
+            throw new TreeException('The items have no common ancestor!');
+        }
+        $depths = $commonAncestor->descendantsWithSelf()->whereKey([$this->getKey(), $item->getKey()])
+                ->toBase()->select($this->getClosureTable() . '.depth')
+                ->get()->pluck('depth');
+        return $depths->sum();
+    }
+
+    /**
+     * Return the depth of $this in the tree (0 is $this is a root).
+     *
+     * @return int
+     */
+    public function depth()
+    {
+        return $this->ancestors()->count();
+    }
+
+    /**
+     * Returns the depth of the subtree of which $this is a root.
+     *
+     * @return int
+     */
+    public function subtreeDepth()
+    {
+        return (int) $this->descendants()->orderByDepth('desc')->value('depth');
+    }
+
+
     // =========================================================================
     // QUERY SCOPES
     // =========================================================================
@@ -360,33 +415,35 @@ trait BelongsToTree
     public function scopeWhereIsDescendantOf($query, $ancestorId, $maxDepth = null, $includingSelf = false)
     {
         $closureTable = $this->getClosureTable();
-        $query->join($closureTable, function ($join) use ($ancestorId, $maxDepth, $closureTable, $includingSelf) {
-            $join->on($closureTable . '.descendant_id', '=', $this->getQualifiedKeyName());
-            $join->where($closureTable . '.ancestor_id', '=', $ancestorId);
+        $alias = $closureTable . uniqid();
+        $query->join($closureTable . ' as ' . $alias, function ($join) use ($ancestorId, $maxDepth, $alias, $includingSelf) {
+            $join->on($alias . '.descendant_id', '=', $this->getQualifiedKeyName());
+            $join->where($alias . '.ancestor_id', '=', $ancestorId);
             if (!$includingSelf) {
-                $join->where($closureTable . '.depth', '>', 0);
+                $join->where($alias . '.depth', '>', 0);
             }
             if ($maxDepth !== null) {
-                $join->where($closureTable . '.depth', '<=', $maxDepth);
+                $join->where($alias . '.depth', '<=', $maxDepth);
             }
         });
-        $query->where($closureTable . '.ancestor_id', '!=', null);
+        $query->where($alias . '.ancestor_id', '!=', null);
     }
 
     public function scopeWhereIsAncestorOf($query, $descendantId, $maxDepth = null, $includingSelf = false)
     {
         $closureTable = $this->getClosureTable();
-        $query->join($closureTable, function ($join) use ($descendantId, $maxDepth, $closureTable, $includingSelf) {
-            $join->on($closureTable . '.ancestor_id', '=', $this->getQualifiedKeyName());
-            $join->where($closureTable . '.descendant_id', '=', $descendantId);
+        $alias = $closureTable . uniqid();
+        $query->join($closureTable . ' as ' . $alias, function ($join) use ($descendantId, $maxDepth, $alias, $includingSelf) {
+            $join->on($alias . '.ancestor_id', '=', $this->getQualifiedKeyName());
+            $join->where($alias . '.descendant_id', '=', $descendantId);
             if (!$includingSelf) {
-                $join->where($closureTable . '.depth', '>', 0);
+                $join->where($alias . '.depth', '>', 0);
             }
             if ($maxDepth !== null) {
-                $join->where($closureTable . '.depth', '<=', $maxDepth);
+                $join->where($alias . '.depth', '<=', $maxDepth);
             }
         });
-        $query->where($closureTable . '.ancestor_id', '!=', null);
+        $query->where($alias . '.ancestor_id', '!=', null);
     }
 
     public function scopeOrderByDepth($query, $direction = 'asc')
