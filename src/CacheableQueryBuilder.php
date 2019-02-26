@@ -37,7 +37,7 @@ class CacheableQueryBuilder extends Builder
         if ($boolean === 'and'
                 && $formattedColumn !== null
                 && in_array($operator, ['=', '==', '!=', '<>', '<', '>', '<=', '>=', '===', '!=='])) {
-            $this->collectionCallbacks[] = ['where', $formattedColumn, $operator, $value];
+            $this->collectionCallbacks['wheres'][] = ['where', $formattedColumn, $operator, $value];
         }
         return parent::where($column, $operator, $value, $boolean);
     }
@@ -46,7 +46,7 @@ class CacheableQueryBuilder extends Builder
     {
         $formattedColumn = $this->formatColumn($column);
         if ($boolean === 'and' && $formattedColumn !== null) {
-            $this->collectionCallbacks[] = [$not ? 'whereNotIn' : 'whereIn', $formattedColumn, $values];
+            $this->collectionCallbacks['wheres'][] = [$not ? 'whereNotIn' : 'whereIn', $formattedColumn, $values];
         }
         return parent::whereIn($column, $values, $boolean, $not);
     }
@@ -55,7 +55,7 @@ class CacheableQueryBuilder extends Builder
     {
         $formattedColumn = $this->formatColumn($column);
         if ($formattedColumn !== null) {
-            $this->collectionCallbacks[] = ['sortBy', $formattedColumn, SORT_REGULAR, $direction === 'desc'];
+            $this->collectionCallbacks['sorts'][] = ['sortBy', $formattedColumn, SORT_REGULAR, $direction === 'desc'];
         }
         return parent::orderBy($column, $direction);
     }

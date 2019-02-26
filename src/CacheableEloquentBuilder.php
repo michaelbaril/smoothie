@@ -17,13 +17,17 @@ class CacheableEloquentBuilder extends Builder
 
     public function get($columns = ['*'])
     {
-        if (!$this->query->usesCache || $columns !== ['*']) {
+        if (!$this->query->usesCache) {
             return parent::get($columns);
         }
 
         $class = get_class($this->getModel());
         $results = $class::allFromCache();
-        foreach ($this->query->collectionCallbacks as $arguments) {
+        $collectionCallbacks = array_merge(
+            $this->query->collectionCallbacks['wheres'] ?? [],
+            arra_reverse($this->query->collectionCallbacks['sorts'] ?? [])
+        );
+        foreach ($collectionCallbacks as $arguments) {
             $method = array_shift($arguments);
             $results = $results->$method(...$arguments);
         }

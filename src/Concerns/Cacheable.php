@@ -19,10 +19,7 @@ trait Cacheable
         'firstOr',
         'pluck',
     ];
-    protected static $cacheTags = ['setup'];
-
-    /** @var Cache */
-    protected static $cache;
+    // protected $cache;
 
     public static function bootCacheable()
     {
@@ -53,23 +50,11 @@ trait Cacheable
     }
 
     /**
-     * @param Cache $cache
-     * @return void
-     */
-    public static function setCache(Cache $cache)
-    {
-        static::$cache = $cache;
-    }
-
-    /**
      * @return Cache
      */
-    public static function getCache()
+    public function getCache()
     {
-        if (static::$cache === null) {
-            static::$cache = app(Cache::class);
-        }
-        return static::$cache;
+        return app('cache')->store($this->cache ?? null);
     }
 
     /**
@@ -80,9 +65,6 @@ trait Cacheable
      */
     public static function all($columns = ['*'])
     {
-        if ($columns !== ['*']) {
-            return parent::all($columns);
-        }
         return static::allFromCache();
     }
 
@@ -93,7 +75,7 @@ trait Cacheable
      */
     public static function allFromCache()
     {
-        return static::getCache()->tags(static::$cacheTags)->rememberForever(static::class, function () {
+        return (new static)->getCache()->rememberForever(static::class, function () {
             return static::loadFromDatabase();
         });
     }
@@ -117,7 +99,7 @@ trait Cacheable
      */
     public static function clearCache()
     {
-        return static::getCache()->tags(static::$cacheTags)->forget(static::class);
+        return (new static)->getCache()->forget(static::class);
     }
 
     /**

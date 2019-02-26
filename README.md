@@ -10,6 +10,7 @@ Some fruity additions to Laravel's Eloquent:
 * [N-ary many-to-many relationships](#n-ary-many-to-many-relationships)
 * [Orderable behavior](#orderable-behavior)
 * [Tree-like structures and closure tables](#tree-like-structures-and-closure-tables)
+* [Cacheable behavior](#cacheable-behavior)
 
 > :warning: Note: only MySQL is tested and actively supported.
 
@@ -1488,4 +1489,144 @@ Also, all methods defined by the `Orderable` trait described
 
 ```php
 $lastChild->moveToPosition(1);
+```
+
+## Cacheable behavior
+
+This package provides a `Cacheable` trait for models. This is not a per-item
+or per-query cache but rather a caching system that will store the whole table
+contents as a collection. Thus, it's to be used with small tables that store
+referential data that won't change very often (such as a list of countries or
+statuses).
+
+### Basic principles
+
+The basic principles are:
+
+* The first time a "cached" query is executed, the whole contents of the table
+will be stored in the cache as an `Eloquent\Collection` with an infinite
+lifetime.
+* The following methods will always use the cache when called statically on the
+model class: `first` and its variants, `find` and its variants, `pluck` and
+`all`.
+* Other queries won't be cached by default, but caching can be enabled on
+certain conditions by chaining the `usingCache` method to the query builder
+(see below).
+* When a model is inserted, updated or deleted, the cache for its table
+is cleared. You can also clear the cache manually using the `clearCache` static
+method.
+
+### Setup
+
+Just use the `Cacheable` trait on your model class. Optionally, you can specify
+which cache driver to use with the `$cache` property:
+
+```php
+class Country extends Model
+{
+    use \Baril\Smoothie\Concerns\Cacheable;
+
+    protected $cache = 'redis';
+}
+```
+
+Of course `$cache` must reference a cache store defined in the `cache.php`
+config file.
+
+If you need a finer customization of the cache store (such as setting tags), you
+can do so by overriding the `getCache` method:
+
+```php
+class Country extends Model
+{
+    use \Baril\Smoothie\Concerns\Cacheable;
+
+    public function getCache()
+    {
+        return app('cache')->store('redis')->tags(['referentials']);
+    }
+}
+```
+
+By default, what will be stored in the cache is the return of `Model::all()`,
+but it can be customized by overriding the `loadFromDatabase` method, for
+example if you need to load relations:
+
+```php
+class Country extends Model
+{
+    use \Baril\Smoothie\Concerns\Cacheable;
+
+    protected static function loadFromDatabase()
+    {
+        return static::with('languages')->get();
+    }
+}
+```
+
+Now the countries will be stored in the cache with their `languages` relation
+loaded.
+
+### Caching queries
+
+In order to enable cache on a query, you need to chain the `usingCache` method
+to the builder:
+
+```php
+Country::where('code', 'fr_FR')->usingCache()->get();
+```
+
+When the `get` method is called, the following occurs:
+1. The collection with the whole table contents is fetched from the cache (or
+from the database and stored in the cache if it was previously empty).
+2. All `where` and `orderBy` clauses of the query are applied to the collection
+(using the `where` and `sortBy` methods).
+3. The filtered and sorted collection is returned.
+
+Step 2 will work only on the following conditions:
+* All the `where` and `orderBy` clauses are translatable into method calls on
+the collection. This excludes complex clauses such as raw SQL clauses.
+* No other clauses (such as `having`, `groupBy` or `with`) must be applied to
+the query, since they're not translatable.
+
+> :warning: If you use untranslatable clauses and still enable cache, no exception
+> will be thrown, but the clauses will be ignored and the query will return
+> unexpected results.
+
+### Cached relations
+
+Since Laravel relations behave like query builders, they can use cache too.
+Of course, the related model needs to use the `Cacheable` trait.
+
+```php
+class User extends Model
+{
+    public function country()
+    {
+        return $this->belongsTo(Country::class)->usingCache();
+    }
+}
+```
+
+Now the `country` relation will always use cache when queried, unless you
+disable it explicitely:
+
+```php
+$user->country()->usingCache(false)->get();
+```
+
+`BelongsToMany` (and `BelongsToMultiMany`) relations can use cache too, but:
+* a query to the pivot table will still be executed,
+* the model that defines the relation need to use the `CachesRelationships` trait.
+
+```php
+class User extends Model
+{
+    use \Baril\Smoothie\Concerns\CachesRelationships;
+
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class)->usingCache();
+    }
+}
 ```
