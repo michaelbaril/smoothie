@@ -92,6 +92,14 @@ trait Cacheable
         return parent::all();
     }
 
+    protected static function count($columns = '*')
+    {
+        if ($columns != '*') {
+            return static::query()->count($columns);
+        }
+        return static::all()->count();
+    }
+
     /**
      * Clears the cache for this table.
      *

@@ -7,7 +7,7 @@ use Baril\Smoothie\Tests\Models\CacheAll;
 use Baril\Smoothie\Tests\Models\CacheAllBut;
 use Baril\Smoothie\Tests\Models\CacheOnly;
 
-class CacheTest extends TestCase
+class AccessorCacheTest extends TestCase
 {
     protected function setUp()
     {

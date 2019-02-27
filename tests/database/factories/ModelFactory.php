@@ -40,3 +40,19 @@ $factory->define(Baril\Smoothie\Tests\Models\Video::class, function (Faker $fake
         'url' => $faker->url,
     ];
 });
+
+$factory->define(Baril\Smoothie\Tests\Models\Country::class, function (Faker $faker) {
+    return [
+        'code' => strtoupper(substr($faker->word, 0, 2)),
+        'name' => $faker->word,
+    ];
+});
+
+$factory->define(Baril\Smoothie\Tests\Models\Person::class, function (Faker $faker) {
+    $country = Baril\Smoothie\Tests\Models\Country::all()->random();
+    return [
+        'first_name' => $faker->firstName,
+        'last_name' => $faker->lastName,
+        'birth_country_id' => $country ? $country->id : null,
+    ];
+});

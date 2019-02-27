@@ -25,7 +25,7 @@ class CacheableEloquentBuilder extends Builder
         $results = $class::allFromCache();
         $collectionCallbacks = array_merge(
             $this->query->collectionCallbacks['wheres'] ?? [],
-            arra_reverse($this->query->collectionCallbacks['sorts'] ?? [])
+            array_reverse($this->query->collectionCallbacks['sorts'] ?? [])
         );
         foreach ($collectionCallbacks as $arguments) {
             $method = array_shift($arguments);

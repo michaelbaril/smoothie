@@ -1507,8 +1507,8 @@ The basic principles are:
 will be stored in the cache as an `Eloquent\Collection` with an infinite
 lifetime.
 * The following methods will always use the cache when called statically on the
-model class: `first` and its variants, `find` and its variants, `pluck` and
-`all`.
+model class: `first` and its variants, `find` and its variants, `pluck`,
+`count` and `all`.
 * Other queries won't be cached by default, but caching can be enabled on
 certain conditions by chaining the `usingCache` method to the query builder
 (see below).
@@ -1569,6 +1569,8 @@ loaded.
 
 ### Caching queries
 
+Caching specific queries is possible but only for very simple queries (see
+below).
 In order to enable cache on a query, you need to chain the `usingCache` method
 to the builder:
 
@@ -1585,7 +1587,8 @@ from the database and stored in the cache if it was previously empty).
 
 Step 2 will work only on the following conditions:
 * All the `where` and `orderBy` clauses are translatable into method calls on
-the collection. This excludes complex clauses such as raw SQL clauses.
+the collection. This excludes more complex clauses such as raw SQL clauses,
+`WHERE` clauses joined by an `OR` operator or with a `LIKE` operator.
 * No other clauses (such as `having`, `groupBy` or `with`) must be applied to
 the query, since they're not translatable.
 
