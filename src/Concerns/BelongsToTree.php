@@ -502,7 +502,7 @@ trait BelongsToTree
         if (is_null($this->$parentKey)) {
             return;
         }
-        if ($this->$parentKey == $this->getKey() || $this->newQuery()->whereKey($this->$parentKey)->whereIsDescendantOf($this->getKey())->count()) {
+        if ($this->$parentKey == $this->getKey() || $this->newQuery()->whereKey($this->$parentKey)->whereIsDescendantOf($this->getKey())->exists()) {
             throw new TreeException('Redundancy error! The item\'s parent can\'t be the item itself or one of its descendants.');
         }
     }
