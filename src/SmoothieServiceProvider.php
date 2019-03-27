@@ -32,7 +32,10 @@ class SmoothieServiceProvider extends ServiceProvider
         });
 
         EloquentBuilder::macro('debugSql', function() {
-            return $this->getQuery()->debugSql();
+            $bindings = array_map(function ($value) {
+                return is_string($value) ? '"'.addcslashes($value, '"').'"' : $value;
+            }, $this->getBindings());
+            return vsprintf(str_replace('?', '%s', $this->toSql()), $bindings);
         });
 
         EloquentBuilder::macro('findInOrder', function ($ids, $columns = ['*']) {
