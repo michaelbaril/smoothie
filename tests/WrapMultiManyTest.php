@@ -13,7 +13,7 @@ class WrapMultiManyTest extends TestCase
     protected $roles;
     protected $users;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->projects = factory(Project::class, 5)->create();

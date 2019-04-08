@@ -16,7 +16,7 @@ class CacheableTest extends TestCase
     ];
     protected $queryCount = 0;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         foreach ($this->fixtures as $data) {

@@ -11,7 +11,7 @@ class OrderableWithNestedGroupsTest extends TestCase
     protected $articles;
     protected $items;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->articles = factory(Article::class, 2)->create();

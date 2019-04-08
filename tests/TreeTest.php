@@ -9,7 +9,7 @@ class TreeTest extends TestCase
 {
     protected $tags;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->tags = collect([]);

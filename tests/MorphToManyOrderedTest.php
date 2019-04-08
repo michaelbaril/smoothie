@@ -8,7 +8,7 @@ use Baril\Smoothie\Tests\Models\Video;
 
 class MorphToManyOrderedTest extends BelongsToManyOrderedTest
 {
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->articles = factory(Post::class, 2)->create();

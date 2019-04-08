@@ -9,7 +9,7 @@ use Baril\Smoothie\Tests\Models\CacheOnly;
 
 class AccessorCacheTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp() : void
     {
     }
 

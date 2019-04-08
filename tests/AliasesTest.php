@@ -9,7 +9,7 @@ class AliasesTest extends TestCase
 {
     protected $model;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->model = new Aliases();

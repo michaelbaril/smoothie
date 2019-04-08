@@ -9,7 +9,7 @@ class OrderableTest extends TestCase
 {
     protected $items;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->items = factory(Model::class, 5)->create();

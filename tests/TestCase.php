@@ -10,7 +10,12 @@ class TestCase extends OrchestraTestCase
 {
     protected function getEnvironmentSetUp($app)
     {
-        $dotenv = new Dotenv(dirname(__DIR__));
+        // We could be using either Dotenv 2.x or 3.x:
+        if (method_exists(Dotenv::class, 'create')) {
+            $dotenv = Dotenv::create(dirname(__DIR__));
+        } else {
+            $dotenv = new Dotenv(dirname(__DIR__));
+        }
         $dotenv->load();
         $app['config']->set('database.default', 'smoothie');
         $app['config']->set('database.connections.smoothie', [
@@ -29,7 +34,7 @@ class TestCase extends OrchestraTestCase
         return [ SmoothieServiceProvider::class ];
     }
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
