@@ -28,7 +28,7 @@ class FixTreeCommand extends Command
         $connection->transaction(function () use ($instance, $connection) {
             $table = $instance->getTable();
             $parentKey = $instance->getParentForeignKeyName();
-            $primaryKey = $instance->getQualifiedKeyName();
+            $primaryKey = $instance->getKeyName();
             $closureTable = $instance->getClosureTable();
 
             // Delete old closures:
@@ -45,11 +45,11 @@ class FixTreeCommand extends Command
             while ($continue) {
                 $connection->insert("
                     INSERT INTO $closureTable (ancestor_id, descendant_id, depth)
-                    SELECT $closureTable.ancestor_id, $primaryKey, ?
-                    FROM $table
-                    INNER JOIN $closureTable
-                        ON $table.$parentKey = $closureTable.descendant_id
-                    WHERE $closureTable.depth = ?", [$depth, $depth - 1]);
+                    SELECT closure_table.ancestor_id, main_table.$primaryKey, ?
+                    FROM $table AS main_table
+                    INNER JOIN $closureTable AS closure_table
+                        ON main_table.$parentKey = closure_table.descendant_id
+                    WHERE closure_table.depth = ?", [$depth, $depth - 1]);
                 $continue = (bool) $connection->table($closureTable)->where('depth', '=', $depth)->exists();
                 $depth++;
             }
