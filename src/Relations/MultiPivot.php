@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class MultiPivot extends Pivot
 {
     protected $multiRelations = [];
+    public $incrementing = true;
     public $timestamps = false;
     protected $createdAt = self::CREATED_AT;
     protected $updatedAt = self::UPDATED_AT;
