@@ -469,16 +469,16 @@ class BelongsToMultiMany extends BelongsToMany
     {
         $query = $this->newPivotStatement();
 
+        if ($this->pivotIds) {
+            $this->addPivotConstraints($this->pivotIds, $query);
+        }
+
         foreach ($this->pivotWheres as $arguments) {
             call_user_func_array([$query, 'where'], $arguments);
         }
 
         foreach ($this->pivotWhereIns as $arguments) {
             call_user_func_array([$query, 'whereIn'], $arguments);
-        }
-
-        if ($this->pivotIds) {
-            $this->addPivotConstraints($this->pivotIds, $query);
         }
 
         return $query->where($this->foreignPivotKey, $this->parent->{$this->parentKey});
