@@ -130,6 +130,58 @@ you want to use a strict inequality),
 * `$query->updatedBefore($date, $strict = false)`,
 * `$query->updatedBetween($start, $end, $strictStart = false, $strictEnd = false)`.
 
+### Cross-database relations
+
+With Laravel, it's possible to declare relations between models that don't belong
+to the same connection, but it will fail in some cases:
+* counting the relation and querying its existence won't work (because it uses a subquery),
+* many-to-many relations will work only when the pivot table is in the same database
+as the related model (because of the join).
+
+This package provides a `crossDatabase` method that will solve this problem
+by prepending the table name with the database name. Of course, it works only
+**if all databases are on the same server**.
+
+The usage is:
+
+```php
+class Post
+{
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->crossDatabase();
+    }
+
+    public function category()
+    {
+        return $this->hasMany(Comment::class)->crossDatabase();
+    }
+}
+```
+
+For a many-to-many relation, you can specify whether the pivot table is in the
+same database as the parent table (default) or the related table. In the example
+below, the pivot table is in the same database as the `posts` table:
+
+```php
+class Post
+{
+    public function tags()
+    {
+        // same database as parent table (posts):
+        return $this->belongsToMany(Tag::class)->crossDatabase();
+    }
+}
+
+class Tag
+{
+    public function posts()
+    {
+        // same database as related table (posts):
+        return $this->belongsToMany(Post::class)->crossDatabase(true);
+    }
+}
+```
 
 ### Debugging
 

@@ -9,6 +9,8 @@ use Baril\Smoothie\Console\GrowTreeCommand;
 use Baril\Smoothie\Console\ShowTreeCommand;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\ServiceProvider;
 
@@ -48,6 +50,26 @@ class SmoothieServiceProvider extends ServiceProvider
             return $this->sortBy(function ($model) use ($ids, &$i) {
                 return $ids[$model->getKey()] ?? ++$i;
             });
+        });
+
+        Relation::macro('crossDatabase', function ($pivot = false) {
+            $relatedModel = $this->getRelated();
+            $database = $relatedModel->getConnection()->getDatabaseName();
+            $table = $relatedModel->getTable();
+
+            $relatedModel->setTable("$database.$table");
+
+            if ($pivot) {
+                $pivotTable = "$database.{$this->table}";
+                foreach ($this->query->getQuery()->joins as $join) {
+                    if ($join->table == $this->table) {
+                        $join->table = $pivotTable;
+                    }
+                }
+                $this->table = $pivotTable;
+            }
+
+            return $this;
         });
     }
 }
