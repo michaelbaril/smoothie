@@ -160,7 +160,7 @@ class Post
 ```
 
 For a many-to-many relation, you can specify whether the pivot table is in the
-same database as the parent table (default) or the related table. In the example
+same database as the parent table or the related table. In the example
 below, the pivot table is in the same database as the `posts` table:
 
 ```php
@@ -169,7 +169,7 @@ class Post
     public function tags()
     {
         // same database as parent table (posts):
-        return $this->belongsToMany(Tag::class)->crossDatabase();
+        return $this->belongsToMany(Tag::class)->crossDatabase('parent');
     }
 }
 
@@ -178,7 +178,7 @@ class Tag
     public function posts()
     {
         // same database as related table (posts):
-        return $this->belongsToMany(Post::class)->crossDatabase(true);
+        return $this->belongsToMany(Post::class)->crossDatabase('related');
     }
 }
 ```

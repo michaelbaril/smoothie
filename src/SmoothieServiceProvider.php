@@ -52,15 +52,20 @@ class SmoothieServiceProvider extends ServiceProvider
             });
         });
 
-        Relation::macro('crossDatabase', function ($pivot = false) {
+        Relation::macro('crossDatabase', function ($pivot = null) {
             $relatedModel = $this->getRelated();
             $database = $relatedModel->getConnection()->getDatabaseName();
             $table = $relatedModel->getTable();
 
             $relatedModel->setTable("$database.$table");
 
-            if ($pivot) {
-                $pivotTable = "$database.{$this->table}";
+            if ($this instanceof BelongsToMany) {
+                if ($pivot == 'related') {
+                    $pivotTable = "$database.{$this->table}";
+                } elseif ($pivot == 'parent') {
+                    $parentDatabase = $this->getParent()->getConnection()->getDatabaseName();
+                    $pivotTable = "$parentDatabase.{$this->table}";
+                }
                 foreach ($this->query->getQuery()->joins as $join) {
                     if ($join->table == $this->table) {
                         $join->table = $pivotTable;
