@@ -8,6 +8,7 @@ Some fruity additions to Laravel's Eloquent:
 * [Fuzzy dates](#fuzzy-dates)
 * [Mutually-belongs-to-many-selves relationship](#mutually-belongs-to-many-selves-relationship)
 * [N-ary many-to-many relationships](#n-ary-many-to-many-relationships)
+* [Dynamic relationships](#dynamic-relationships)
 * [Orderable behavior](#orderable-behavior)
 * [Tree-like structures and closure tables](#tree-like-structures-and-closure-tables)
 * [Cacheable behavior](#cacheable-behavior)
@@ -979,6 +980,47 @@ $pivots = ['role' => $roleId, 'project' => $projectId]; // ... or the relation n
 $pivots = ['role' => Role::first(), 'project' => Project::first()]; // ... where values can be ids or Models
 $pivots = [ ['role_id' => $roleId, 'project_id' => $projectId] ]; // an array of such associative arrays
 $pivots = collect([ ['role_id' => $roleId, 'project_id' => $projectId] ]); // or even a Collection
+```
+
+## Dynamic relationships
+
+The `Baril\Smoothie\Concerns\HasDynamicRelations` trait gives you the ability to
+define new relations on your model on-the-fly.
+
+These relations can be defined either "globally" (for all instances of the
+class), or locally (for a specific instance).
+
+First, use the `HasDynamicRelations` trait on your model:
+
+```php
+class Asset extends Model
+{
+    use \Baril\Smoothie\Concerns\HasDynamicRelations;
+}
+```
+
+You can now define your relations by calling the `defineRelation` method,
+either statically or on an instance:
+
+```php
+// This relation will now be available on all your Assets:
+Asset::defineRelation($someName, function () use ($someClass) {
+    return $this->belongsTo($someClass);
+});
+
+// This relation will now be available on this instance only:
+$asset = new Asset;
+$asset->defineRelation($someOtherName, function () use ($someOtherClass) {
+    return $this->belongsTo($someOtherClass);
+});
+```
+
+In both cases, once the relation has been defined, you can use it like any
+Eloquent relation:
+
+```php
+$entities = $asset->$someName()->where('status', 1)->get(); // regular call
+$attachments = $asset->$someOtherClass; // dynamic property
 ```
 
 ## Orderable behavior
