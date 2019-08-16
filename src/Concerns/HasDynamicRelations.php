@@ -11,7 +11,8 @@ trait HasDynamicRelations
     {
         if ($method == 'defineRelation') {
             list($name, $closure) = $parameters;
-            static::$ynamicRelations[$name] = $closure;
+            $this->localDynamicRelations[$name] = $closure;
+            return;
         }
         if ($this->hasRelation($method)) {
             if (array_key_exists($method, $this->localDynamicRelations)) {
@@ -28,14 +29,15 @@ trait HasDynamicRelations
     {
         if ($method == 'defineRelation') {
             list($name, $closure) = $parameters;
-            $this->localDynamicRelations[$name] = $closure;
+            static::$dynamicRelations[$name] = $closure;
+            return;
         }
         return parent::__callStatic($method, $parameters);
     }
 
     public function hasRelation($name)
     {
-        return (method_exists($this, $name)  && $this->$name() instanceof Relations\Relation)
+        return method_exists($this, $name)
                 || array_key_exists($name, static::$dynamicRelations)
                 || array_key_exists($name, $this->localDynamicRelations);
     }
