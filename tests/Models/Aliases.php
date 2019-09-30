@@ -20,6 +20,12 @@ class Aliases extends Model
         'pr_date' => 'date',
         'pr_json' => 'array',
     ];
+    protected $appends = [
+        'description',
+        'aliased_description',
+        'label',
+        'publication_date',
+    ];
 
     protected $aliases = [
         'description' => 'pr_desc',

@@ -105,4 +105,18 @@ class AliasesTest extends TestCase
         $this->model['json->otherAttribute'] = 'otherValue';
         $this->assertEquals(['attribute' => 'value', 'otherAttribute' => 'otherValue'], $this->model->json);
     }
+
+    public function test_to_array()
+    {
+        $array = $this->model->toArray();
+        foreach ([
+            'description',
+            'aliased_description',
+            'label',
+            'publication_date',
+        ] as $key) {
+            $this->assertArrayHasKey($key, $array);
+            $this->assertEquals($this->model->$key, $array[$key]);
+        }
+    }
 }

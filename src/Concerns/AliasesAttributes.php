@@ -82,6 +82,21 @@ trait AliasesAttributes
     }
 
     /**
+     * Get the value of an attribute using its mutator.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return mixed
+     */
+    protected function mutateAttribute($key, $value)
+    {
+        if ($this->isAlias($key) && !$this->hasGetMutator($key)) {
+            return $this->getAttribute($key);
+        }
+        return parent::mutateAttribute($key, $value);
+    }
+
+    /**
      * Set a given attribute on the model.
      *
      * @param  string  $key
