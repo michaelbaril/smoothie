@@ -82,7 +82,11 @@ class BelongsToMultiMany extends BelongsToMany
     protected function addPivotConstraints($values, $query = null)
     {
         $query = $query ?? $this;
-        $query->whereIn($this->getQualifiedPivotKeyName(), $values);
+
+        // We're using a raw expression because it will be easier to remove if
+        // all() is called:
+        $valuesRaw = $this->getConnection()->raw(implode(',', array_map('intval', $values)));
+        $query->whereRaw($this->getQualifiedPivotKeyName() . " in ($valuesRaw)");
         return $query;
     }
 
@@ -355,7 +359,7 @@ class BelongsToMultiMany extends BelongsToMany
             $pivotKey = $this->getQualifiedPivotKeyName();
             $wheres =& $this->query->getQuery()->wheres;
             foreach ($wheres as $i => $where) {
-                if ($where['type'] == 'In' && $where['column'] == $pivotKey) {
+                if ($where['type'] == 'raw' && Str::startsWith($where['sql'], $pivotKey)) {
                     unset($wheres[$i]);
                     $wheres = array_values($wheres);
                     $this->pivotIds = null;
@@ -469,16 +473,16 @@ class BelongsToMultiMany extends BelongsToMany
     {
         $query = $this->newPivotStatement();
 
-        if ($this->pivotIds) {
-            $this->addPivotConstraints($this->pivotIds, $query);
-        }
-
         foreach ($this->pivotWheres as $arguments) {
             call_user_func_array([$query, 'where'], $arguments);
         }
 
         foreach ($this->pivotWhereIns as $arguments) {
             call_user_func_array([$query, 'whereIn'], $arguments);
+        }
+
+        if ($this->pivotIds) {
+            $this->addPivotConstraints($this->pivotIds, $query);
         }
 
         return $query->where($this->foreignPivotKey, $this->parent->{$this->parentKey});
