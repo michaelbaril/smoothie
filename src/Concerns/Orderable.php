@@ -58,13 +58,13 @@ trait Orderable
         });
 
         static::deleting(function ($model) {
-            \DB::beginTransaction();
+            $model->getConnection()->beginTransaction();
         });
 
         static::deleted(function ($model) {
             /** @var Model $model */
             $model->next()->decrement($model->getOrderColumn());
-            \DB::commit();
+            $model->getConnection()->commit();
         });
     }
 
