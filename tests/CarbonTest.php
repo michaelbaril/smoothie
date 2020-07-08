@@ -3,6 +3,7 @@
 namespace Baril\Smoothie\Tests;
 
 use Baril\Smoothie\Tests\Models\Article;
+use Baril\Smoothie\Tests\Models\Post;
 use Baril\Smoothie\Carbon;
 
 class CarbonTest extends TestCase
@@ -51,6 +52,17 @@ class CarbonTest extends TestCase
             'Ym0' => ['2010-10-00', '10/2010'],
             'Y00' => ['2010-00-00', '2010'],
         ];
+    }
+
+    public function test_date_in_date_field()
+    {
+        $article = factory(Post::class)->create();
+
+        $article->publication_date = '2010-01-00';
+        $this->assertEquals('2010-01', $article->publication_date->format('Y-m-d', 'Y-m', 'Y'));
+
+        $article->save();
+        $this->assertEquals('2010-01', $article->fresh()->publication_date->format('Y-m-d', 'Y-m', 'Y'));
     }
 
     public function test_date_in_3_fields()

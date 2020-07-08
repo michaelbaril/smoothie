@@ -55,6 +55,22 @@ trait HasFuzzyDates
         );
     }
 
+    /**
+     * Convert a DateTime to a storable string.
+     *
+     * @param  mixed  $value
+     * @return string|null
+     */
+    public function fromDateTime($value)
+    {
+        $format = $this->getDateFormat();
+        $formatMonth = str_replace('d', '00', $format);
+        $formatYear = str_replace('m', '00', $formatMonth);
+        return empty($value) ? $value : $this->asDateTime($value)->format(
+            $format, $formatMonth, $formatYear
+        );
+    }
+
     protected function mergeDate($yearAttribute, $monthAttribute = null, $dayAttribute = null)
     {
         if (func_num_args() == 1) {

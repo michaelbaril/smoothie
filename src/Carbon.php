@@ -25,14 +25,14 @@ class Carbon extends LaravelCarbon
     public static function createFromFormat($format, $time, $tz = null)
     {
         $hasMonth = $hasDay = true;
-        if ($format === 'Y-m-d' && preg_match('/\-00($|\-)/', $time)) {
-            if (substr($time, -6, 3) === '-00') {
-                $hasMonth = $hasDay = false;
-                $time = substr($time, 0, 4) . '-01' . substr($time, -3);
+        if (substr($format, 0, 5) === 'Y-m-d') {
+            if (substr($time, 4, 3) === '-00') {
+                $hasMonth = false;
+                $time = substr($time, 0, 4) . '-01' . substr($time, 7);
             }
-            if (substr($time, -3) === '-00') {
+            if (substr($time, 7, 3) === '-00') {
                 $hasDay = false;
-                $time = substr($time, 0, 7) . '-01';
+                $time = substr($time, 0, 7) . '-01' . substr($time, 10);
             }
         }
         $instance = parent::createFromFormat($format, $time, $tz);

@@ -26,6 +26,7 @@ class TestCase extends OrchestraTestCase
             'username' => getenv('DB_USERNAME'),
             'password' => getenv('DB_PASSWORD'),
             'prefix'   => '',
+            'strict' => false,
         ]);
     }
 
