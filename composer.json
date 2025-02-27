@@ -11,6 +11,7 @@
     ],
     "license": "MIT",
     "type": "library",
+    "abandoned": true,
     "require": {
         "php": ">=7.0",
         "illuminate/database": "~5.6",
